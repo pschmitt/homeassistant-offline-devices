@@ -49,6 +49,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     coordinator = OfflineDevicesCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
+    coordinator.async_setup_event_listeners()
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
 

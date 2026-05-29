@@ -6,7 +6,8 @@ import logging
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
+from homeassistant.const import EVENT_STATE_CHANGED
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -72,6 +73,48 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                     CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
                 )
             ),
+        )
+
+    @callback
+    def async_setup_event_listeners(self) -> None:
+        """Refresh promptly on relevant state and registry changes.
+
+        The poll (``update_interval``) stays on as a backstop, but these
+        listeners make detection effectively instant. The coordinator's
+        built-in request-refresh debouncer coalesces bursts (e.g. all of a
+        device's entities flipping at once), so a flood of state changes still
+        results in at most one recompute per cooldown window.
+        """
+
+        @callback
+        def _on_state_change(event: Event) -> None:
+            # Only an entity toggling in/out of "unavailable" can change which
+            # devices are fully offline; ignore every other state change.
+            old = event.data.get("old_state")
+            new = event.data.get("new_state")
+            old_unavailable = old is not None and old.state == STATE_UNAVAILABLE
+            new_unavailable = new is not None and new.state == STATE_UNAVAILABLE
+            if old_unavailable != new_unavailable:
+                self.async_request_refresh()
+
+        @callback
+        def _on_registry_change(_event: Event) -> None:
+            # Devices/entities added, removed, enabled, relabelled, etc.
+            self.async_request_refresh()
+
+        entry = self.config_entry
+        entry.async_on_unload(
+            self.hass.bus.async_listen(EVENT_STATE_CHANGED, _on_state_change)
+        )
+        entry.async_on_unload(
+            self.hass.bus.async_listen(
+                dr.EVENT_DEVICE_REGISTRY_UPDATED, _on_registry_change
+            )
+        )
+        entry.async_on_unload(
+            self.hass.bus.async_listen(
+                er.EVENT_ENTITY_REGISTRY_UPDATED, _on_registry_change
+            )
         )
 
     @property

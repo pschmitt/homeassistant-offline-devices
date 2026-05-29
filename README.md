@@ -52,7 +52,10 @@ ZHA and Matter devices are recognized from their device-registry identifiers.
 
 ## Options
 
-- **Update interval** — how often the detector re-evaluates (default 60 s).
+- **Update interval** — backstop poll interval (default 60 s). Detection is
+  primarily **event-driven**: the integration re-evaluates immediately when an
+  entity goes in/out of `unavailable` or when the device/entity registries
+  change (debounced to coalesce bursts), so the poll is just a safety net.
 - **Create repair issues** — *off by default*. When on, one repair issue is
   raised per offline device, linking to the device page, its integration, and
   — for ZHA — the *add Zigbee device* screen for quick re-pairing. Issues clear
