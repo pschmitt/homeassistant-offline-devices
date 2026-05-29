@@ -10,14 +10,43 @@ from __future__ import annotations
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import CoreState, Event, HomeAssistant, callback
+from homeassistant.helpers import label_registry as lr
 
-from .const import DOMAIN, PLATFORMS
+from .const import (
+    CONF_IGNORED_LABELS,
+    DEFAULT_IGNORED_LABELS,
+    DOMAIN,
+    PLATFORMS,
+)
 from .coordinator import OfflineDevicesCoordinator
 from .repairs import async_sync_issues
 
 
+@callback
+def _ensure_labels_exist(hass: HomeAssistant, label_ids: list[str]) -> None:
+    """Create any configured ignore-labels that do not exist yet.
+
+    Labels are referenced by id; when one is missing we create it using the id
+    as its name (HA derives the same slug back), so a fresh install gets a
+    usable 'intermittent' label out of the box.
+    """
+    registry = lr.async_get(hass)
+    for label_id in label_ids:
+        if registry.async_get_label(label_id) is not None:
+            continue
+        try:
+            registry.async_create(name=label_id)
+        except ValueError:
+            # A label with that name already exists under a different id.
+            continue
+
+
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Offline Devices from a config entry."""
+    _ensure_labels_exist(
+        hass, entry.options.get(CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS)
+    )
+
     coordinator = OfflineDevicesCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
 
