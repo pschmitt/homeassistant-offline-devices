@@ -10,6 +10,7 @@ from .const import (
     ATTR_COUNT,
     ATTR_DEVICE_IDS,
     ATTR_DEVICES,
+    ATTR_OFFLINE_SINCE,
     ATTR_MSG,
     ATTR_PRIMARY_INFO,
     ATTR_SECONDARY_INFO,
@@ -95,6 +96,10 @@ class OfflineDevicesEntity(CoordinatorEntity[OfflineDevicesCoordinator]):
             ATTR_COUNT: len(names),
             ATTR_DEVICES: names,
             ATTR_DEVICE_IDS: [device.device_id for device in devices],
+            ATTR_OFFLINE_SINCE: [
+                device.offline_since.isoformat() if device.offline_since else None
+                for device in devices
+            ],
             ATTR_MSG: msg,
             ATTR_PRIMARY_INFO: primary,
             ATTR_SECONDARY_INFO: joined,

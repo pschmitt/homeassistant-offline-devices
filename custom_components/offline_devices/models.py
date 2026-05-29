@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from datetime import datetime
 
 from .const import (
     DOMAIN_MATTER,
@@ -28,6 +29,9 @@ class OfflineDevice:
     # The owning integration domain, resolved from the device's config entry
     # (e.g. "homekit_controller", "shelly"). Used for the integration link.
     integration: str | None
+    # When the device was last seen going fully offline (max last_changed of
+    # its unavailable entities at detection time).
+    offline_since: datetime | None
 
     @property
     def is_zha(self) -> bool:

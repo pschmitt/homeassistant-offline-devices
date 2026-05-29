@@ -203,6 +203,10 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             namespaces = tuple(
                 sorted({identifier[0] for identifier in device.identifiers})
             )
+            offline_since = max(
+                (s.last_changed for s in states if s.last_changed is not None),
+                default=None,
+            )
             report.devices.append(
                 OfflineDevice(
                     device_id=device.id,
@@ -210,6 +214,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                     area=area_name,
                     namespaces=namespaces,
                     integration=self._integration_domain(device),
+                    offline_since=offline_since,
                 )
             )
 

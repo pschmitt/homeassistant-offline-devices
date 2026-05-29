@@ -45,6 +45,7 @@ DEFAULT_IGNORED_LABELS: list[str] = [LABEL_INTERMITTENT]
 ATTR_COUNT = "count"
 ATTR_DEVICES = "devices"
 ATTR_DEVICE_IDS = "device_ids"
+ATTR_OFFLINE_SINCE = "offline_since"
 ATTR_MSG = "msg"
 ATTR_PRIMARY_INFO = "primary_info"
 ATTR_SECONDARY_INFO = "secondary_info"
