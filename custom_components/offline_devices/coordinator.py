@@ -65,13 +65,13 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             hass,
             logger=_LOGGER,
             name=DOMAIN,
+            config_entry=config_entry,
             update_interval=timedelta(
                 seconds=config_entry.options.get(
                     CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
                 )
             ),
         )
-        self.config_entry = config_entry
 
     @property
     def _ignored_names(self) -> list[str]:
