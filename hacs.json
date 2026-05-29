@@ -1,0 +1,8 @@
+{
+  "name": "Offline Devices",
+  "domains": [
+    "offline_devices"
+  ],
+  "homeassistant": "2024.1.0",
+  "render_readme": true
+}

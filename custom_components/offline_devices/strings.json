@@ -1,0 +1,64 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "📡 Offline Devices",
+        "description": "Track Home Assistant devices whose entities have all become unavailable. One instance covers every device; ZHA and Matter get their own breakdown entities."
+      }
+    },
+    "abort": {
+      "already_configured": "Offline Devices is already set up."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "⚙️ Offline Devices options",
+        "data": {
+          "scan_interval": "⏱️ Update interval (seconds)",
+          "enable_repairs": "🛠️ Create repair issues for offline devices",
+          "ignored_names": "🙈 Ignored device-name substrings"
+        },
+        "data_description": {
+          "enable_repairs": "Off by default. When on, raises one repair issue per offline device, linking to the device, its integration, and — for ZHA — the add-Zigbee-device screen.",
+          "ignored_names": "Devices whose name contains any of these (case-insensitive) are never reported. The 'intermittent' device-registry label is always honored too."
+        }
+      }
+    }
+  },
+  "issues": {
+    "device_offline": {
+      "title": "📡 {name} is offline",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "📡 {name} is offline",
+            "description": "All entities of **{name}** ({area}) are unavailable.\n\n- [Open the device]({device_link})\n- [Open its integration]({integration_link})\n\nReconnect or power-cycle the device. Submitting dismisses this issue; it returns automatically if the device stays offline."
+          }
+        }
+      }
+    },
+    "zha_device_offline": {
+      "title": "📡 ZHA device {name} is offline",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "📡 ZHA device {name} is offline",
+            "description": "All entities of the Zigbee device **{name}** ({area}) are unavailable.\n\n- [Open the device]({device_link})\n- [Re-pair a Zigbee device]({zha_add_link})\n\nTry power-cycling the device or re-pairing it. Submitting dismisses this issue; it returns automatically if the device stays offline."
+          }
+        }
+      }
+    },
+    "matter_device_offline": {
+      "title": "📡 Matter device {name} is offline",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "📡 Matter device {name} is offline",
+            "description": "All entities of the Matter device **{name}** ({area}) are unavailable.\n\n- [Open the device]({device_link})\n- [Open the Matter integration]({integration_link})\n\nReconnect or power-cycle the device. Submitting dismisses this issue; it returns automatically if the device stays offline."
+          }
+        }
+      }
+    }
+  }
+}
