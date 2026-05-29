@@ -17,11 +17,13 @@
         "data": {
           "scan_interval": "⏱️ Update interval (seconds)",
           "enable_repairs": "🛠️ Create repair issues for offline devices",
-          "ignored_names": "🙈 Ignored device-name substrings"
+          "ignored_names": "🙈 Ignored device-name substrings",
+          "ignored_labels": "🏷️ Ignored device labels"
         },
         "data_description": {
           "enable_repairs": "Off by default. When on, raises one repair issue per offline device, linking to the device, its integration, and — for ZHA — the add-Zigbee-device screen.",
-          "ignored_names": "Devices whose name contains any of these (case-insensitive) are never reported. The 'intermittent' device-registry label is always honored too."
+          "ignored_names": "Devices whose name contains any of these (case-insensitive) are never reported.",
+          "ignored_labels": "Devices carrying any of these labels are never reported. Defaults to the 'intermittent' label."
         }
       }
     }

@@ -13,12 +13,13 @@ from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
+    CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
     CONF_SCAN_INTERVAL,
+    DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
-    LABEL_INTERMITTENT,
     STATE_UNAVAILABLE,
 )
 from .models import OfflineDevice, OfflineReport
@@ -80,6 +81,15 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             CONF_IGNORED_NAMES, DEFAULT_IGNORED_NAMES
         )
 
+    @property
+    def _ignored_labels(self) -> set[str]:
+        """Return the configured set of device label ids to ignore."""
+        return set(
+            self.config_entry.options.get(
+                CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS
+            )
+        )
+
     def _integration_domain(self, device: dr.DeviceEntry) -> str | None:
         """Return the owning integration domain from the device's config entry."""
         entry_id = device.primary_config_entry or next(
@@ -101,6 +111,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         area_registry = ar.async_get(self.hass)
         entities_by_device = _meaningful_entities_by_device(entity_registry)
         ignored_names = self._ignored_names
+        ignored_labels = self._ignored_labels
 
         report = OfflineReport()
         for device in device_registry.devices.values():
@@ -109,7 +120,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             # Skip helper / service devices; only physical devices can go offline.
             if device.entry_type is not None:
                 continue
-            if LABEL_INTERMITTENT in (device.labels or set()):
+            if ignored_labels and (device.labels or set()) & ignored_labels:
                 continue
 
             name = device.name_by_user or device.name or device.id

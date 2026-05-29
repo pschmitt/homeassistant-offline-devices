@@ -20,7 +20,7 @@ DOMAIN_ZHA = "zha"
 DOMAIN_MATTER = "matter"
 DOMAIN_ZWAVE = "zwave_js"
 
-# A device carrying this label is treated as flaky and never reported as
+# Default label that marks a device as flaky so it is never reported as
 # offline. Carried over from the previous shell-based implementation.
 LABEL_INTERMITTENT = "intermittent"
 
@@ -31,11 +31,15 @@ STATE_UNAVAILABLE = "unavailable"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_ENABLE_REPAIRS = "enable_repairs"
 CONF_IGNORED_NAMES = "ignored_names"
+CONF_IGNORED_LABELS = "ignored_labels"
 
 DEFAULT_SCAN_INTERVAL = 60
 MIN_SCAN_INTERVAL = 10
 DEFAULT_ENABLE_REPAIRS = False
 DEFAULT_IGNORED_NAMES: list[str] = []
+# Devices carrying any of these labels are ignored. Defaults to the
+# "intermittent" label to preserve the previous behavior.
+DEFAULT_IGNORED_LABELS: list[str] = [LABEL_INTERMITTENT]
 
 # Attributes exposed on the entities.
 ATTR_COUNT = "count"

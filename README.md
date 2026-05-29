@@ -58,7 +58,8 @@ ZHA and Matter devices are recognized from their device-registry identifiers.
   — for ZHA — the *add Zigbee device* screen for quick re-pairing. Issues clear
   automatically when the device comes back.
 - **Ignored device-name substrings** — case-insensitive names to never report.
-  The `intermittent` label is always honored as well.
+- **Ignored device labels** — devices carrying any of these labels are never
+  reported. Defaults to the `intermittent` label.
 
 ## Installation
 

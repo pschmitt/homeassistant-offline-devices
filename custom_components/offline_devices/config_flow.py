@@ -15,6 +15,8 @@ from homeassistant.config_entries import (
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
     BooleanSelector,
+    LabelSelector,
+    LabelSelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     NumberSelectorMode,
@@ -25,9 +27,11 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_ENABLE_REPAIRS,
+    CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
     CONF_SCAN_INTERVAL,
     DEFAULT_ENABLE_REPAIRS,
+    DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
@@ -64,6 +68,7 @@ class OfflineDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                     CONF_ENABLE_REPAIRS: DEFAULT_ENABLE_REPAIRS,
                     CONF_IGNORED_NAMES: DEFAULT_IGNORED_NAMES,
+                    CONF_IGNORED_LABELS: DEFAULT_IGNORED_LABELS,
                 },
             )
 
@@ -117,6 +122,12 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                             mode=SelectSelectorMode.LIST,
                         )
                     ),
+                    vol.Optional(
+                        CONF_IGNORED_LABELS,
+                        default=options.get(
+                            CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS
+                        ),
+                    ): LabelSelector(LabelSelectorConfig(multiple=True)),
                 }
             ),
         )
