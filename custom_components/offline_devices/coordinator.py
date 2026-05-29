@@ -87,6 +87,17 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         """
 
         @callback
+        def _schedule_refresh() -> None:
+            # async_request_refresh() is a coroutine; from a @callback we must
+            # schedule it rather than call it un-awaited. The coordinator's
+            # request-refresh debouncer coalesces the bursts these produce.
+            self.config_entry.async_create_task(
+                self.hass,
+                self.async_request_refresh(),
+                "offline_devices_event_refresh",
+            )
+
+        @callback
         def _on_state_change(event: Event) -> None:
             # Only an entity toggling in/out of "unavailable" can change which
             # devices are fully offline; ignore every other state change.
@@ -95,12 +106,12 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             old_unavailable = old is not None and old.state == STATE_UNAVAILABLE
             new_unavailable = new is not None and new.state == STATE_UNAVAILABLE
             if old_unavailable != new_unavailable:
-                self.async_request_refresh()
+                _schedule_refresh()
 
         @callback
         def _on_registry_change(_event: Event) -> None:
             # Devices/entities added, removed, enabled, relabelled, etc.
-            self.async_request_refresh()
+            _schedule_refresh()
 
         entry = self.config_entry
         entry.async_on_unload(
