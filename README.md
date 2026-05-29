@@ -76,6 +76,12 @@ ZHA and Matter devices are recognized from their device-registry identifiers.
 Copy `custom_components/offline_devices` into your `custom_components/`
 directory and restart Home Assistant.
 
+## Prior art
+
+This integration supersedes a shell-based `command_line` implementation, kept
+for reference under [`contrib/legacy-shell/`](contrib/legacy-shell/). The
+"all entities unavailable" heuristic originated there.
+
 ## License
 
 GPL-3.0-or-later. See [LICENSE](LICENSE).
