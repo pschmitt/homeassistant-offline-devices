@@ -27,7 +27,8 @@ async def async_get_config_entry_diagnostics(
                     "device_id": device.device_id,
                     "name": device.name,
                     "area": device.area,
-                    "domains": list(device.domains),
+                    "namespaces": list(device.namespaces),
+                    "integration": device.integration,
                 }
                 for device in devices
             ],

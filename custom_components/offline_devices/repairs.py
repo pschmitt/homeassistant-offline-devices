@@ -39,6 +39,8 @@ def _translation_key(device: OfflineDevice) -> str:
         return "zha_device_offline"
     if device.is_matter:
         return "matter_device_offline"
+    if device.is_zwave:
+        return "zwave_device_offline"
     return "device_offline"
 
 
@@ -49,9 +51,9 @@ def _placeholders(device: OfflineDevice) -> dict[str, str]:
         "area": device.area or "—",
         "device_link": URL_DEVICE_PAGE.format(device_id=device.device_id),
     }
-    if device.primary_domain:
+    if device.integration:
         placeholders["integration_link"] = URL_INTEGRATION_PAGE.format(
-            domain=device.primary_domain
+            domain=device.integration
         )
     else:
         placeholders["integration_link"] = URL_DEVICE_PAGE.format(

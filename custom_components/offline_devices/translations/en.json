@@ -59,6 +59,17 @@
           }
         }
       }
+    },
+    "zwave_device_offline": {
+      "title": "📡 Z-Wave device {name} is offline",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "📡 Z-Wave device {name} is offline",
+            "description": "All entities of the Z-Wave device **{name}** ({area}) are unavailable.\n\n- [Open the device]({device_link})\n- [Open the Z-Wave integration]({integration_link})\n\nReconnect or power-cycle the device, or check it is in range of the mesh. Submitting dismisses this issue; it returns automatically if the device stays offline."
+          }
+        }
+      }
     }
   }
 }

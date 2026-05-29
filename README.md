@@ -17,16 +17,23 @@ A single **Offline Devices** service device with these entities:
 | `binary_sensor.offline_devices_devices_offline` | problem | **any** device offline |
 | `binary_sensor.offline_devices_zha_devices_offline` | problem | a ZHA device offline |
 | `binary_sensor.offline_devices_matter_devices_offline` | problem | a Matter device offline |
+| `binary_sensor.offline_devices_z_wave_devices_offline` | problem | a Z-Wave device offline |
 | `sensor.offline_devices_offline_count` | count | number of offline devices (all) |
 | `sensor.offline_devices_zha_offline_count` | count | number of offline ZHA devices |
 | `sensor.offline_devices_matter_offline_count` | count | number of offline Matter devices |
+| `sensor.offline_devices_z_wave_offline_count` | count | number of offline Z-Wave devices |
 
 Every entity exposes the same attributes: `count`, `devices` (names),
 `device_ids`, `msg`, `primary_info`, `secondary_info` — convenient for
 Lovelace and notifications.
 
-The global scope counts **all** offline devices; `zha` and `matter` are
-breakdowns of that same set.
+The global scope counts **all** offline devices; `zha`, `matter` and `zwave`
+are breakdowns of that same set.
+
+> The Matter entities use the `cbi:matter` icon from the
+> [custom-brand-icons](https://github.com/elax46/custom-brand-icons) frontend
+> module. Install it (e.g. via HACS) for the icon to render; otherwise change
+> the icon in the entity settings.
 
 ## How "offline" is decided
 

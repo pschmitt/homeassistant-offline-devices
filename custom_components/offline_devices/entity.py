@@ -14,22 +14,33 @@ from .const import (
     ATTR_PRIMARY_INFO,
     ATTR_SECONDARY_INFO,
     DOMAIN,
+    SCOPE_ALL,
     SCOPE_MATTER,
     SCOPE_ZHA,
+    SCOPE_ZWAVE,
 )
 from .coordinator import OfflineDevicesCoordinator
 from .models import OfflineDevice
 
 # Human-readable labels for each scope, used in names and messages.
 SCOPE_LABELS: dict[str, str] = {
-    "all": "Devices Offline",
+    SCOPE_ALL: "Devices Offline",
     SCOPE_ZHA: "ZHA Devices Offline",
     SCOPE_MATTER: "Matter Devices Offline",
+    SCOPE_ZWAVE: "Z-Wave Devices Offline",
 }
 SCOPE_NOUNS: dict[str, str] = {
-    "all": "devices",
+    SCOPE_ALL: "devices",
     SCOPE_ZHA: "ZHA devices",
     SCOPE_MATTER: "Matter devices",
+    SCOPE_ZWAVE: "Z-Wave devices",
+}
+# Icons shared by the binary sensor and count sensor of each scope.
+SCOPE_ICONS: dict[str, str] = {
+    SCOPE_ALL: "mdi:devices",
+    SCOPE_ZHA: "mdi:zigbee",
+    SCOPE_MATTER: "cbi:matter",
+    SCOPE_ZWAVE: "mdi:z-wave",
 }
 
 

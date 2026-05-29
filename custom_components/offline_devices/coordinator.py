@@ -80,6 +80,16 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             CONF_IGNORED_NAMES, DEFAULT_IGNORED_NAMES
         )
 
+    def _integration_domain(self, device: dr.DeviceEntry) -> str | None:
+        """Return the owning integration domain from the device's config entry."""
+        entry_id = device.primary_config_entry or next(
+            iter(device.config_entries), None
+        )
+        if entry_id is None:
+            return None
+        entry = self.hass.config_entries.async_get_entry(entry_id)
+        return entry.domain if entry else None
+
     async def _async_update_data(self) -> OfflineReport:
         """Recompute the offline-device report from the registries and states."""
         return self._compute()
@@ -125,7 +135,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                 area = area_registry.async_get_area(device.area_id)
                 area_name = area.name if area else None
 
-            domains = tuple(
+            namespaces = tuple(
                 sorted({identifier[0] for identifier in device.identifiers})
             )
             report.devices.append(
@@ -133,7 +143,8 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                     device_id=device.id,
                     name=name,
                     area=area_name,
-                    domains=domains,
+                    namespaces=namespaces,
+                    integration=self._integration_domain(device),
                 )
             )
 

@@ -7,16 +7,18 @@ from homeassistant.const import Platform
 DOMAIN = "offline_devices"
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
 
-# Scopes exposed as entities. "all" is the global scope; "zha" and "matter"
-# are breakdowns for those radios.
+# Scopes exposed as entities. "all" is the global scope; "zha", "matter" and
+# "zwave" are per-radio breakdowns.
 SCOPE_ALL = "all"
 SCOPE_ZHA = "zha"
 SCOPE_MATTER = "matter"
-SCOPES: tuple[str, ...] = (SCOPE_ALL, SCOPE_ZHA, SCOPE_MATTER)
+SCOPE_ZWAVE = "zwave"
+SCOPES: tuple[str, ...] = (SCOPE_ALL, SCOPE_ZHA, SCOPE_MATTER, SCOPE_ZWAVE)
 
-# Device-registry identifier domains used to classify a device.
-IDENTIFIER_DOMAIN_ZHA = "zha"
-IDENTIFIER_DOMAIN_MATTER = "matter"
+# Integration domains used to classify a device.
+DOMAIN_ZHA = "zha"
+DOMAIN_MATTER = "matter"
+DOMAIN_ZWAVE = "zwave_js"
 
 # A device carrying this label is treated as flaky and never reported as
 # offline. Carried over from the previous shell-based implementation.

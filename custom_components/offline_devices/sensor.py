@@ -7,19 +7,15 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, SCOPES
+from .const import DOMAIN, SCOPE_ALL, SCOPE_MATTER, SCOPE_ZHA, SCOPE_ZWAVE, SCOPES
 from .coordinator import OfflineDevicesCoordinator
-from .entity import OfflineDevicesEntity
+from .entity import SCOPE_ICONS, OfflineDevicesEntity
 
 _NAMES: dict[str, str] = {
-    "all": "Offline Count",
-    "zha": "ZHA Offline Count",
-    "matter": "Matter Offline Count",
-}
-_ICONS: dict[str, str] = {
-    "all": "mdi:devices",
-    "zha": "mdi:zigbee",
-    "matter": "mdi:matter",
+    SCOPE_ALL: "Offline Count",
+    SCOPE_ZHA: "ZHA Offline Count",
+    SCOPE_MATTER: "Matter Offline Count",
+    SCOPE_ZWAVE: "Z-Wave Offline Count",
 }
 
 
@@ -46,7 +42,7 @@ class OfflineDevicesCountSensor(OfflineDevicesEntity, SensorEntity):
         super().__init__(coordinator, entry, scope)
         self._attr_unique_id = f"{entry.entry_id}_{scope}_count"
         self._attr_name = _NAMES.get(scope, scope)
-        self._attr_icon = _ICONS.get(scope)
+        self._attr_icon = SCOPE_ICONS.get(scope)
 
     @property
     def native_value(self) -> int:

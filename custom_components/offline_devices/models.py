@@ -4,7 +4,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .const import SCOPE_ALL, SCOPE_MATTER, SCOPE_ZHA
+from .const import (
+    DOMAIN_MATTER,
+    DOMAIN_ZHA,
+    DOMAIN_ZWAVE,
+    SCOPE_ALL,
+    SCOPE_MATTER,
+    SCOPE_ZHA,
+    SCOPE_ZWAVE,
+)
 
 
 @dataclass(frozen=True)
@@ -14,24 +22,27 @@ class OfflineDevice:
     device_id: str
     name: str
     area: str | None
-    # Integration domains taken from the device registry identifiers,
-    # e.g. ("zha",) or ("homekit_controller",).
-    domains: tuple[str, ...]
+    # Identifier namespaces from the device registry, e.g. ("zha",) or
+    # ("homekit_controller:accessory-id",). Used to classify ZHA/Matter.
+    namespaces: tuple[str, ...]
+    # The owning integration domain, resolved from the device's config entry
+    # (e.g. "homekit_controller", "shelly"). Used for the integration link.
+    integration: str | None
 
     @property
     def is_zha(self) -> bool:
         """Return True when this is a ZHA (Zigbee) device."""
-        return "zha" in self.domains
+        return DOMAIN_ZHA in self.namespaces or self.integration == DOMAIN_ZHA
 
     @property
     def is_matter(self) -> bool:
         """Return True when this is a Matter device."""
-        return "matter" in self.domains
+        return DOMAIN_MATTER in self.namespaces or self.integration == DOMAIN_MATTER
 
     @property
-    def primary_domain(self) -> str | None:
-        """Return the first integration domain, if any."""
-        return self.domains[0] if self.domains else None
+    def is_zwave(self) -> bool:
+        """Return True when this is a Z-Wave device."""
+        return DOMAIN_ZWAVE in self.namespaces or self.integration == DOMAIN_ZWAVE
 
 
 @dataclass
@@ -48,4 +59,6 @@ class OfflineReport:
             return [device for device in self.devices if device.is_zha]
         if scope == SCOPE_MATTER:
             return [device for device in self.devices if device.is_matter]
+        if scope == SCOPE_ZWAVE:
+            return [device for device in self.devices if device.is_zwave]
         return []

@@ -12,13 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DOMAIN, SCOPES
 from .coordinator import OfflineDevicesCoordinator
-from .entity import SCOPE_LABELS, OfflineDevicesEntity
-
-_ICONS: dict[str, str] = {
-    "all": "mdi:devices",
-    "zha": "mdi:zigbee",
-    "matter": "mdi:matter",
-}
+from .entity import SCOPE_ICONS, SCOPE_LABELS, OfflineDevicesEntity
 
 
 async def async_setup_entry(
@@ -43,7 +37,7 @@ class OfflineDevicesBinarySensor(OfflineDevicesEntity, BinarySensorEntity):
         super().__init__(coordinator, entry, scope)
         self._attr_unique_id = f"{entry.entry_id}_{scope}_problem"
         self._attr_name = SCOPE_LABELS.get(scope, scope)
-        self._attr_icon = _ICONS.get(scope)
+        self._attr_icon = SCOPE_ICONS.get(scope)
 
     @property
     def is_on(self) -> bool:
