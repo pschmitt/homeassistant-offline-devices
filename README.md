@@ -38,7 +38,8 @@ are breakdowns of that same set.
 ## How "offline" is decided
 
 A device is considered offline when **all** of its *meaningful* entities are
-`unavailable`. Meaningful entities are:
+`unavailable` for at least the configured minimum offline age. Meaningful
+entities are:
 
 - enabled (not disabled in the entity registry),
 - not diagnostic/config entities (these are skipped — e.g. ZHA/HomeKit
@@ -56,6 +57,8 @@ ZHA and Matter devices are recognized from their device-registry identifiers.
   primarily **event-driven**: the integration re-evaluates immediately when an
   entity goes in/out of `unavailable` or when the device/entity registries
   change (debounced to coalesce bursts), so the poll is just a safety net.
+- **Minimum offline age** — how long a device must stay fully unavailable before
+  it is reported (default 0 s). Increase this to suppress short offline flaps.
 - **Create repair issues** — *off by default*. When on, one repair issue is
   raised per offline device, linking to the device page, its integration, and
   — for ZHA — the *add Zigbee device* screen for quick re-pairing. Issues clear

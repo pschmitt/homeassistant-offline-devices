@@ -16,11 +16,13 @@
         "title": "⚙️ Offline Devices options",
         "data": {
           "scan_interval": "⏱️ Update interval (seconds)",
+          "min_offline_age": "⏳ Minimum offline age (seconds)",
           "enable_repairs": "🛠️ Create repair issues for offline devices",
           "ignored_names": "🙈 Ignored device-name substrings",
           "ignored_labels": "🏷️ Ignored device labels"
         },
         "data_description": {
+          "min_offline_age": "Devices are reported only after all meaningful entities have been unavailable for at least this long. Use this to suppress short flaps.",
           "enable_repairs": "Off by default. When on, raises one repair issue per offline device, linking to the device, its integration, and — for ZHA — the add-Zigbee-device screen.",
           "ignored_names": "Devices whose name contains any of these (case-insensitive) are never reported.",
           "ignored_labels": "Devices carrying any of these labels are never reported. Defaults to the 'intermittent' label."

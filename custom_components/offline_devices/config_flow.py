@@ -29,12 +29,15 @@ from .const import (
     CONF_ENABLE_REPAIRS,
     CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
+    CONF_MIN_OFFLINE_AGE,
     CONF_SCAN_INTERVAL,
     DEFAULT_ENABLE_REPAIRS,
     DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
+    DEFAULT_MIN_OFFLINE_AGE,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    MIN_OFFLINE_AGE,
     MIN_SCAN_INTERVAL,
 )
 
@@ -66,6 +69,7 @@ class OfflineDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
                 data={},
                 options={
                     CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
+                    CONF_MIN_OFFLINE_AGE: DEFAULT_MIN_OFFLINE_AGE,
                     CONF_ENABLE_REPAIRS: DEFAULT_ENABLE_REPAIRS,
                     CONF_IGNORED_NAMES: DEFAULT_IGNORED_NAMES,
                     CONF_IGNORED_LABELS: DEFAULT_IGNORED_LABELS,
@@ -98,6 +102,19 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                     ): NumberSelector(
                         NumberSelectorConfig(
                             min=MIN_SCAN_INTERVAL,
+                            mode=NumberSelectorMode.BOX,
+                            step=1,
+                            unit_of_measurement="s",
+                        )
+                    ),
+                    vol.Required(
+                        CONF_MIN_OFFLINE_AGE,
+                        default=options.get(
+                            CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE
+                        ),
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            min=MIN_OFFLINE_AGE,
                             mode=NumberSelectorMode.BOX,
                             step=1,
                             unit_of_measurement="s",

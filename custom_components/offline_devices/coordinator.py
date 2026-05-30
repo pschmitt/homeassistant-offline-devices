@@ -12,13 +12,16 @@ from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import dt as dt_util
 
 from .const import (
     CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
+    CONF_MIN_OFFLINE_AGE,
     CONF_SCAN_INTERVAL,
     DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
+    DEFAULT_MIN_OFFLINE_AGE,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     STATE_UNAVAILABLE,
@@ -144,6 +147,13 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             )
         )
 
+    @property
+    def _min_offline_age(self) -> int:
+        """Return the minimum unavailable age before a device is reported."""
+        return self.config_entry.options.get(
+            CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE
+        )
+
     def _integration_domain(self, device: dr.DeviceEntry) -> str | None:
         """Return the owning integration domain from the device's config entry."""
         entry_id = device.primary_config_entry or next(
@@ -166,6 +176,8 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         entities_by_device = _meaningful_entities_by_device(entity_registry)
         ignored_names = self._ignored_names
         ignored_labels = self._ignored_labels
+        min_offline_age = self._min_offline_age
+        now = dt_util.utcnow()
 
         report = OfflineReport()
         for device in device_registry.devices.values():
@@ -207,6 +219,12 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                 (s.last_changed for s in states if s.last_changed is not None),
                 default=None,
             )
+            if (
+                min_offline_age > 0
+                and offline_since is not None
+                and now - offline_since < timedelta(seconds=min_offline_age)
+            ):
+                continue
             report.devices.append(
                 OfflineDevice(
                     device_id=device.id,
