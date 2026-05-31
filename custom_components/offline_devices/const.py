@@ -31,14 +31,16 @@ STATE_UNAVAILABLE = "unavailable"
 CONF_SCAN_INTERVAL = "scan_interval"
 CONF_MIN_OFFLINE_AGE = "min_offline_age"
 CONF_ENABLE_REPAIRS = "enable_repairs"
+CONF_IGNORED_INTEGRATIONS = "ignored_integrations"
 CONF_IGNORED_NAMES = "ignored_names"
 CONF_IGNORED_LABELS = "ignored_labels"
 
 DEFAULT_SCAN_INTERVAL = 60
 MIN_SCAN_INTERVAL = 10
-DEFAULT_MIN_OFFLINE_AGE = 300
+DEFAULT_MIN_OFFLINE_AGE = 3600
 MIN_OFFLINE_AGE = 0
 DEFAULT_ENABLE_REPAIRS = False
+DEFAULT_IGNORED_INTEGRATIONS: list[str] = []
 DEFAULT_IGNORED_NAMES: list[str] = []
 # Devices carrying any of these labels are ignored. Defaults to the
 # "intermittent" label to preserve the previous behavior.

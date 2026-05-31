@@ -58,11 +58,13 @@ ZHA and Matter devices are recognized from their device-registry identifiers.
   entity goes in/out of `unavailable` or when the device/entity registries
   change (debounced to coalesce bursts), so the poll is just a safety net.
 - **Minimum offline age** — how long a device must stay fully unavailable before
-  it is reported (default 300 s). Increase this to suppress short offline flaps.
+  it is reported (default 3600 s). Increase this to suppress short offline flaps.
 - **Create repair issues** — *off by default*. When on, one repair issue is
   raised per offline device, linking to the device page, its integration, and
   — for ZHA — the *add Zigbee device* screen for quick re-pairing. Issues clear
   automatically when the device comes back.
+- **Ignored integrations** — devices owned by any of these integration domains
+  are never reported.
 - **Ignored device-name substrings** — case-insensitive names to never report.
 - **Ignored device labels** — devices carrying any of these labels are never
   reported. Defaults to the `intermittent` label.

@@ -27,11 +27,13 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     CONF_ENABLE_REPAIRS,
+    CONF_IGNORED_INTEGRATIONS,
     CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
     CONF_MIN_OFFLINE_AGE,
     CONF_SCAN_INTERVAL,
     DEFAULT_ENABLE_REPAIRS,
+    DEFAULT_IGNORED_INTEGRATIONS,
     DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
     DEFAULT_MIN_OFFLINE_AGE,
@@ -71,6 +73,7 @@ class OfflineDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                     CONF_MIN_OFFLINE_AGE: DEFAULT_MIN_OFFLINE_AGE,
                     CONF_ENABLE_REPAIRS: DEFAULT_ENABLE_REPAIRS,
+                    CONF_IGNORED_INTEGRATIONS: DEFAULT_IGNORED_INTEGRATIONS,
                     CONF_IGNORED_NAMES: DEFAULT_IGNORED_NAMES,
                     CONF_IGNORED_LABELS: DEFAULT_IGNORED_LABELS,
                 },
@@ -90,6 +93,13 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
 
         options = self.config_entry.options
+        integration_domains = sorted(
+            {
+                entry.domain
+                for entry in self.hass.config_entries.async_entries()
+                if entry.domain != DOMAIN
+            }
+        )
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
@@ -126,6 +136,20 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                             CONF_ENABLE_REPAIRS, DEFAULT_ENABLE_REPAIRS
                         ),
                     ): BooleanSelector(),
+                    vol.Optional(
+                        CONF_IGNORED_INTEGRATIONS,
+                        default=options.get(
+                            CONF_IGNORED_INTEGRATIONS,
+                            DEFAULT_IGNORED_INTEGRATIONS,
+                        ),
+                    ): SelectSelector(
+                        SelectSelectorConfig(
+                            options=integration_domains,
+                            multiple=True,
+                            custom_value=True,
+                            mode=SelectSelectorMode.LIST,
+                        )
+                    ),
                     vol.Optional(
                         CONF_IGNORED_NAMES,
                         default=options.get(

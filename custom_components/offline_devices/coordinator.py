@@ -15,10 +15,12 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    CONF_IGNORED_INTEGRATIONS,
     CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
     CONF_MIN_OFFLINE_AGE,
     CONF_SCAN_INTERVAL,
+    DEFAULT_IGNORED_INTEGRATIONS,
     DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
     DEFAULT_MIN_OFFLINE_AGE,
@@ -148,14 +150,34 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         )
 
     @property
+    def _ignored_integrations(self) -> set[str]:
+        """Return the configured set of integration domains to ignore."""
+        return {
+            domain.casefold()
+            for domain in self.config_entry.options.get(
+                CONF_IGNORED_INTEGRATIONS, DEFAULT_IGNORED_INTEGRATIONS
+            )
+            if domain
+        }
+
+    @property
     def _min_offline_age(self) -> int:
         """Return the minimum unavailable age before a device is reported."""
         return self.config_entry.options.get(
             CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE
         )
 
+    def _integration_domains(self, device: dr.DeviceEntry) -> tuple[str, ...]:
+        """Return all owning integration domains from the device's config entries."""
+        domains = {
+            entry.domain
+            for entry_id in device.config_entries
+            if (entry := self.hass.config_entries.async_get_entry(entry_id)) is not None
+        }
+        return tuple(sorted(domains))
+
     def _integration_domain(self, device: dr.DeviceEntry) -> str | None:
-        """Return the owning integration domain from the device's config entry."""
+        """Return the preferred integration domain for links and reporting."""
         entry_id = device.primary_config_entry or next(
             iter(device.config_entries), None
         )
@@ -174,6 +196,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         entity_registry = er.async_get(self.hass)
         area_registry = ar.async_get(self.hass)
         entities_by_device = _meaningful_entities_by_device(entity_registry)
+        ignored_integrations = self._ignored_integrations
         ignored_names = self._ignored_names
         ignored_labels = self._ignored_labels
         min_offline_age = self._min_offline_age
@@ -191,6 +214,12 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
 
             name = device.name_by_user or device.name or device.id
             if _is_ignored(name, ignored_names):
+                continue
+            integration_domains = self._integration_domains(device)
+            if ignored_integrations and any(
+                domain.casefold() in ignored_integrations
+                for domain in integration_domains
+            ):
                 continue
 
             entity_ids = entities_by_device.get(device.id)
