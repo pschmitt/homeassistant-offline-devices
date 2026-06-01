@@ -10,7 +10,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -32,24 +31,6 @@ async def async_setup_entry(
     async_add_entities(
         OfflineDevicesBinarySensor(coordinator, entry, scope) for scope in SCOPES
     )
-
-    # Migrate existing per-device sensors: fix entity_category and rename
-    # entity_ids from *_offline to *_online.
-    entity_reg = er.async_get(hass)
-    for reg_entry in er.async_entries_for_config_entry(entity_reg, entry.entry_id):
-        uid = reg_entry.unique_id or ""
-        if not (uid.startswith("offline_devices_") and uid.endswith("_problem")):
-            continue
-        updates: dict = {}
-        if reg_entry.entity_category != EntityCategory.DIAGNOSTIC:
-            updates["entity_category"] = EntityCategory.DIAGNOSTIC
-        current_id = reg_entry.entity_id
-        if current_id.endswith("_offline"):
-            new_id = current_id[: -len("_offline")] + "_online"
-            if not entity_reg.async_get(new_id):
-                updates["new_entity_id"] = new_id
-        if updates:
-            entity_reg.async_update_entity(current_id, **updates)
 
     # Per-device sensors: one for every physical, non-disabled HA device so
     # automations can reference them before a device has ever gone offline.
