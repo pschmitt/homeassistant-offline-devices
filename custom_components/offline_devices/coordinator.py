@@ -19,13 +19,22 @@ from .const import (
     CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
     CONF_MIN_OFFLINE_AGE,
+    CONF_MIN_OFFLINE_AGE_MATTER,
+    CONF_MIN_OFFLINE_AGE_ZHA,
+    CONF_MIN_OFFLINE_AGE_ZWAVE,
     CONF_SCAN_INTERVAL,
     DEFAULT_IGNORED_INTEGRATIONS,
     DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
     DEFAULT_MIN_OFFLINE_AGE,
+    DEFAULT_MIN_OFFLINE_AGE_MATTER,
+    DEFAULT_MIN_OFFLINE_AGE_ZHA,
+    DEFAULT_MIN_OFFLINE_AGE_ZWAVE,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    DOMAIN_MATTER,
+    DOMAIN_ZHA,
+    DOMAIN_ZWAVE,
     STATE_UNAVAILABLE,
 )
 from .models import OfflineDevice, OfflineReport
@@ -162,10 +171,35 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
 
     @property
     def _min_offline_age(self) -> int:
-        """Return the minimum unavailable age before a device is reported."""
+        """Return the global minimum unavailable age before a device is reported."""
         return self.config_entry.options.get(
             CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE
         )
+
+    def _effective_min_offline_age(
+        self, integration_domains: tuple[str, ...], namespaces: tuple[str, ...]
+    ) -> int:
+        """Return the effective min_offline_age for a device.
+
+        Checks per-protocol overrides first. Any override of -1 means
+        'inherit the global setting'.
+        """
+        global_age = self._min_offline_age
+        if DOMAIN_MATTER in namespaces or DOMAIN_MATTER in integration_domains:
+            override = self.config_entry.options.get(
+                CONF_MIN_OFFLINE_AGE_MATTER, DEFAULT_MIN_OFFLINE_AGE_MATTER
+            )
+        elif DOMAIN_ZHA in namespaces or DOMAIN_ZHA in integration_domains:
+            override = self.config_entry.options.get(
+                CONF_MIN_OFFLINE_AGE_ZHA, DEFAULT_MIN_OFFLINE_AGE_ZHA
+            )
+        elif DOMAIN_ZWAVE in namespaces or DOMAIN_ZWAVE in integration_domains:
+            override = self.config_entry.options.get(
+                CONF_MIN_OFFLINE_AGE_ZWAVE, DEFAULT_MIN_OFFLINE_AGE_ZWAVE
+            )
+        else:
+            return global_age
+        return override if override >= 0 else global_age
 
     def _integration_domains(self, device: dr.DeviceEntry) -> tuple[str, ...]:
         """Return all owning integration domains from the device's config entries."""
@@ -199,7 +233,6 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         ignored_integrations = self._ignored_integrations
         ignored_names = self._ignored_names
         ignored_labels = self._ignored_labels
-        min_offline_age = self._min_offline_age
         now = dt_util.utcnow()
 
         report = OfflineReport()
@@ -244,14 +277,17 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             namespaces = tuple(
                 sorted({identifier[0] for identifier in device.identifiers})
             )
+            effective_min_age = self._effective_min_offline_age(
+                integration_domains, namespaces
+            )
             offline_since = max(
                 (s.last_changed for s in states if s.last_changed is not None),
                 default=None,
             )
             if (
-                min_offline_age > 0
+                effective_min_age > 0
                 and offline_since is not None
-                and now - offline_since < timedelta(seconds=min_offline_age)
+                and now - offline_since < timedelta(seconds=effective_min_age)
             ):
                 continue
             report.devices.append(

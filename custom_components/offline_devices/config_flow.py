@@ -31,15 +31,22 @@ from .const import (
     CONF_IGNORED_LABELS,
     CONF_IGNORED_NAMES,
     CONF_MIN_OFFLINE_AGE,
+    CONF_MIN_OFFLINE_AGE_MATTER,
+    CONF_MIN_OFFLINE_AGE_ZHA,
+    CONF_MIN_OFFLINE_AGE_ZWAVE,
     CONF_SCAN_INTERVAL,
     DEFAULT_ENABLE_REPAIRS,
     DEFAULT_IGNORED_INTEGRATIONS,
     DEFAULT_IGNORED_LABELS,
     DEFAULT_IGNORED_NAMES,
     DEFAULT_MIN_OFFLINE_AGE,
+    DEFAULT_MIN_OFFLINE_AGE_MATTER,
+    DEFAULT_MIN_OFFLINE_AGE_ZHA,
+    DEFAULT_MIN_OFFLINE_AGE_ZWAVE,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MIN_OFFLINE_AGE,
+    MIN_OFFLINE_AGE_OVERRIDE,
     MIN_SCAN_INTERVAL,
 )
 
@@ -125,6 +132,45 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                     ): NumberSelector(
                         NumberSelectorConfig(
                             min=MIN_OFFLINE_AGE,
+                            mode=NumberSelectorMode.BOX,
+                            step=1,
+                            unit_of_measurement="s",
+                        )
+                    ),
+                    vol.Required(
+                        CONF_MIN_OFFLINE_AGE_ZHA,
+                        default=options.get(
+                            CONF_MIN_OFFLINE_AGE_ZHA, DEFAULT_MIN_OFFLINE_AGE_ZHA
+                        ),
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            min=MIN_OFFLINE_AGE_OVERRIDE,
+                            mode=NumberSelectorMode.BOX,
+                            step=1,
+                            unit_of_measurement="s",
+                        )
+                    ),
+                    vol.Required(
+                        CONF_MIN_OFFLINE_AGE_MATTER,
+                        default=options.get(
+                            CONF_MIN_OFFLINE_AGE_MATTER, DEFAULT_MIN_OFFLINE_AGE_MATTER
+                        ),
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            min=MIN_OFFLINE_AGE_OVERRIDE,
+                            mode=NumberSelectorMode.BOX,
+                            step=1,
+                            unit_of_measurement="s",
+                        )
+                    ),
+                    vol.Required(
+                        CONF_MIN_OFFLINE_AGE_ZWAVE,
+                        default=options.get(
+                            CONF_MIN_OFFLINE_AGE_ZWAVE, DEFAULT_MIN_OFFLINE_AGE_ZWAVE
+                        ),
+                    ): NumberSelector(
+                        NumberSelectorConfig(
+                            min=MIN_OFFLINE_AGE_OVERRIDE,
                             mode=NumberSelectorMode.BOX,
                             step=1,
                             unit_of_measurement="s",

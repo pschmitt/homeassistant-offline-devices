@@ -40,6 +40,16 @@ MIN_SCAN_INTERVAL = 10
 DEFAULT_MIN_OFFLINE_AGE = 3600
 MIN_OFFLINE_AGE = 0
 DEFAULT_ENABLE_REPAIRS = False
+
+# Per-protocol offline age overrides (-1 = inherit the global min_offline_age).
+CONF_MIN_OFFLINE_AGE_ZHA = "min_offline_age_zha"
+CONF_MIN_OFFLINE_AGE_MATTER = "min_offline_age_matter"
+CONF_MIN_OFFLINE_AGE_ZWAVE = "min_offline_age_zwave"
+DEFAULT_MIN_OFFLINE_AGE_ZHA = -1
+DEFAULT_MIN_OFFLINE_AGE_MATTER = -1
+DEFAULT_MIN_OFFLINE_AGE_ZWAVE = -1
+# Minimum allowed value for a protocol override (-1 = sentinel for "inherit").
+MIN_OFFLINE_AGE_OVERRIDE = -1
 DEFAULT_IGNORED_INTEGRATIONS: list[str] = []
 DEFAULT_IGNORED_NAMES: list[str] = []
 # Devices carrying any of these labels are ignored. Defaults to the
