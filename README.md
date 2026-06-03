@@ -73,10 +73,11 @@ ZHA and Matter devices are recognized from their device-registry identifiers.
 
 ### HACS
 
-1. Open HACS.
-2. Add `https://github.com/pschmitt/homeassistant-offline-devices` as a custom
-   repository of type **Integration**.
-3. Install **Offline Devices** and restart Home Assistant.
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=pschmitt&repository=homeassistant-offline-devices&category=integration)
+
+1. Click the badge above, or open HACS and add `https://github.com/pschmitt/homeassistant-offline-devices` as a custom repository of type **Integration**.
+2. Install **Offline Devices**.
+3. Restart Home Assistant.
 4. Add the integration from **Settings → Devices & services**.
 
 ### Manual
