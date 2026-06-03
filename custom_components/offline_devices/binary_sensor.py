@@ -111,7 +111,7 @@ class DeviceOfflineBinarySensor(
     _attr_device_class = BinarySensorDeviceClass.CONNECTIVITY
     _attr_entity_category = EntityCategory.DIAGNOSTIC
     _attr_has_entity_name = True
-    _attr_name = "Online"
+    _attr_name = "Reachable"
 
     def __init__(
         self,
@@ -126,7 +126,7 @@ class DeviceOfflineBinarySensor(
 
     @property
     def is_on(self) -> bool:
-        """Return True when this device is currently online."""
+        """Return True when this device is currently reachable."""
         if self.coordinator.data is None:
             return False
         return not any(
