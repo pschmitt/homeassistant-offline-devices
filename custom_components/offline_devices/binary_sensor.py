@@ -10,12 +10,13 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, SCOPES
-from .coordinator import OfflineDevicesCoordinator
+from .const import DOMAIN, SCOPES, STATE_UNAVAILABLE
+from .coordinator import OfflineDevicesCoordinator, _meaningful_entities_by_device
 from .entity import SCOPE_ICONS, SCOPE_LABELS, OfflineDevicesEntity
 
 
@@ -126,9 +127,20 @@ class DeviceOfflineBinarySensor(
 
     @property
     def is_on(self) -> bool:
-        """Return True when this device is currently reachable."""
-        if self.coordinator.data is None:
-            return False
-        return not any(
-            d.device_id == self._device_id for d in self.coordinator.data.devices
+        """Return True when this device is currently reachable.
+
+        Checks raw entity states directly so that ignored devices (e.g. those
+        labelled 'intermittent') still reflect their actual connectivity.
+        """
+        entity_registry = er.async_get(self.hass)
+        entity_ids = _meaningful_entities_by_device(entity_registry).get(
+            self._device_id, []
         )
+        if not entity_ids:
+            return True
+        states = [
+            s for eid in entity_ids if (s := self.hass.states.get(eid)) is not None
+        ]
+        if not states:
+            return True
+        return not all(s.state == STATE_UNAVAILABLE for s in states)
