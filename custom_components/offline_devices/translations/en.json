@@ -17,6 +17,9 @@
         "data": {
           "scan_interval": "⏱️ Update interval (seconds)",
           "min_offline_age": "⏳ Minimum offline age (seconds)",
+          "min_offline_age_zha": "⏳ ZHA (Zigbee) offline age override (seconds)",
+          "min_offline_age_matter": "⏳ Matter / Thread offline age override (seconds)",
+          "min_offline_age_zwave": "⏳ Z-Wave offline age override (seconds)",
           "enable_repairs": "🛠️ Create repair issues for offline devices",
           "ignored_integrations": "🧩 Ignored integrations",
           "ignored_names": "🙈 Ignored device-name substrings",
@@ -24,6 +27,9 @@
         },
         "data_description": {
           "min_offline_age": "Devices are reported only after all meaningful entities have been unavailable for at least this long. Use this to suppress short flaps.",
+          "min_offline_age_zha": "Overrides the global minimum offline age for Zigbee (ZHA) devices. Set to -1 to inherit the global setting.",
+          "min_offline_age_matter": "Overrides the global minimum offline age for Matter / Thread devices. Set to -1 to inherit the global setting.",
+          "min_offline_age_zwave": "Overrides the global minimum offline age for Z-Wave devices. Set to -1 to inherit the global setting.",
           "enable_repairs": "Off by default. When on, raises one repair issue per offline device, linking to the device, its integration, and — for ZHA — the add-Zigbee-device screen.",
           "ignored_integrations": "Devices owned by any of these integration domains are never reported. Useful for noisy presence-style integrations such as OpenWrt ubus.",
           "ignored_names": "Devices whose name contains any of these (case-insensitive) are never reported.",
