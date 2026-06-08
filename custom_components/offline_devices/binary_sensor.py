@@ -20,6 +20,15 @@ from .coordinator import OfflineDevicesCoordinator, _meaningful_entities_by_devi
 from .entity import SCOPE_ICONS, SCOPE_LABELS, OfflineDevicesEntity
 
 
+def _should_skip_device(dev_entry: dr.DeviceEntry) -> bool:
+    """Return True for devices that should not get a per-device reachable sensor."""
+    if dev_entry.disabled_by is not None:
+        return True
+    if dev_entry.entry_type is not None:
+        return True
+    return False
+
+
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -40,11 +49,12 @@ async def async_setup_entry(
 
     def _make_sensor(dev_entry: dr.DeviceEntry) -> DeviceOfflineBinarySensor | None:
         """Return a sensor for dev_entry, or None if it should be skipped."""
-        if dev_entry.disabled_by is not None:
-            return None
-        if dev_entry.entry_type is not None:
+        if _should_skip_device(dev_entry):
             return None
         if dev_entry.id in known_device_ids:
+            return None
+        entity_ids = _meaningful_entities_by_device(er.async_get(hass)).get(dev_entry.id)
+        if not entity_ids:
             return None
         known_device_ids.add(dev_entry.id)
         return DeviceOfflineBinarySensor(coordinator, dev_entry)
