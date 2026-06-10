@@ -70,6 +70,10 @@ async def async_setup_entry(
         dev_entry = dev_reg.async_get(device_id)
         if dev_entry is None or _should_skip_device(dev_entry):
             ent_reg.async_remove(ent_entry.entity_id)
+            if dev_entry is not None:
+                dev_reg.async_update_device(
+                    dev_entry.id, remove_config_entry_id=entry.entry_id
+                )
 
     async_add_entities(
         sensor
