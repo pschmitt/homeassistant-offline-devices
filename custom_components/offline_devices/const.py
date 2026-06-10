@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.const import Platform
+from homeassistant.const import STATE_UNAVAILABLE, Platform
 
 DOMAIN = "offline_devices"
 PLATFORMS: list[Platform] = [Platform.BINARY_SENSOR, Platform.SENSOR]
@@ -24,8 +24,8 @@ DOMAIN_ZWAVE = "zwave_js"
 # offline. Carried over from the previous shell-based implementation.
 LABEL_INTERMITTENT = "intermittent"
 
-# The state that marks an entity as unreachable.
-STATE_UNAVAILABLE = "unavailable"
+# The state that marks an entity as unreachable (re-exported for local use).
+__all__ = ["STATE_UNAVAILABLE"]
 
 # Options.
 CONF_SCAN_INTERVAL = "scan_interval"

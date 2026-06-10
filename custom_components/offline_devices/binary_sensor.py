@@ -59,14 +59,18 @@ async def async_setup_entry(
     ent_reg = er.async_get(hass)
     known_device_ids: set[str] = set()
 
-    def _make_sensor(dev_entry: dr.DeviceEntry) -> DeviceOfflineBinarySensor | None:
+    def _make_sensor(
+        dev_entry: dr.DeviceEntry,
+        entities_map: dict[str, list[str]] | None = None,
+    ) -> DeviceOfflineBinarySensor | None:
         """Return a sensor for dev_entry, or None if it should be skipped."""
         if _should_skip_device(dev_entry, monitor_service_devices=monitor_service):
             return None
         if dev_entry.id in known_device_ids:
             return None
-        entity_ids = _meaningful_entities_by_device(er.async_get(hass)).get(dev_entry.id)
-        if not entity_ids:
+        if entities_map is None:
+            entities_map = _meaningful_entities_by_device(er.async_get(hass))
+        if not entities_map.get(dev_entry.id):
             return None
         known_device_ids.add(dev_entry.id)
         return DeviceOfflineBinarySensor(coordinator, dev_entry)
@@ -99,10 +103,11 @@ async def async_setup_entry(
         if _should_skip_device(dev, monitor_service_devices=monitor_service):
             dev_reg.async_update_device(dev.id, remove_config_entry_id=entry.entry_id)
 
+    initial_entities_map = _meaningful_entities_by_device(ent_reg)
     async_add_entities(
         sensor
         for dev in dev_reg.devices.values()
-        if (sensor := _make_sensor(dev)) is not None
+        if (sensor := _make_sensor(dev, initial_entities_map)) is not None
     )
 
     # Add sensors for devices that are registered after initial setup.
@@ -173,7 +178,10 @@ class DeviceOfflineBinarySensor(
         super().__init__(coordinator)
         self._device_id = dev_entry.id
         self._attr_unique_id = f"offline_devices_{dev_entry.id}_problem"
-        self._attr_device_info = DeviceInfo(identifiers=dev_entry.identifiers)
+        self._attr_device_info = DeviceInfo(
+            identifiers=dev_entry.identifiers,
+            connections=dev_entry.connections,
+        )
 
     @property
     def is_on(self) -> bool:
