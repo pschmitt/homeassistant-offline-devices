@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
@@ -40,6 +41,24 @@ from .const import (
 from .models import OfflineDevice, OfflineReport
 
 _LOGGER = logging.getLogger(__name__)
+
+# Matches labels like "offline_24h" or "offline_2d" (case-insensitive).
+_LABEL_OFFLINE_AGE_RE = re.compile(r"^offline_(\d+)([hd])$", re.IGNORECASE)
+
+
+def _label_min_offline_age(labels: set[str]) -> int | None:
+    """Return a per-device min offline age in seconds from a label, or None.
+
+    Recognises labels of the form ``offline_<N>h`` (hours) and
+    ``offline_<N>d`` (days).  The first matching label wins.
+    """
+    for label in labels:
+        m = _LABEL_OFFLINE_AGE_RE.match(label)
+        if m:
+            value = int(m.group(1))
+            unit = m.group(2).lower()
+            return value * (3600 if unit == "h" else 86400)
+    return None
 
 
 def _is_ignored(name: str, ignored_names: list[str]) -> bool:
@@ -277,8 +296,11 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             namespaces = tuple(
                 sorted({identifier[0] for identifier in device.identifiers})
             )
-            effective_min_age = self._effective_min_offline_age(
-                integration_domains, namespaces
+            label_age = _label_min_offline_age(device.labels or set())
+            effective_min_age = (
+                label_age
+                if label_age is not None
+                else self._effective_min_offline_age(integration_domains, namespaces)
             )
             offline_since = max(
                 (s.last_changed for s in states if s.last_changed is not None),
