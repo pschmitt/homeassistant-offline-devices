@@ -45,6 +45,7 @@ async def async_setup_entry(
     # Per-device sensors: one for every physical, non-disabled HA device so
     # automations can reference them before a device has ever gone offline.
     dev_reg = dr.async_get(hass)
+    ent_reg = er.async_get(hass)
     known_device_ids: set[str] = set()
 
     def _make_sensor(dev_entry: dr.DeviceEntry) -> DeviceOfflineBinarySensor | None:
@@ -58,6 +59,17 @@ async def async_setup_entry(
             return None
         known_device_ids.add(dev_entry.id)
         return DeviceOfflineBinarySensor(coordinator, dev_entry)
+
+    # Remove stale per-device sensor entries whose device is now a service
+    # device or no longer qualifies (e.g. entry_type was recently set).
+    for ent_entry in ent_reg.entities.get_entries_for_config_entry_id(entry.entry_id):
+        if not ent_entry.unique_id.startswith("offline_devices_") or not ent_entry.unique_id.endswith("_problem"):
+            continue
+        # Extract device_id from unique_id: "offline_devices_{device_id}_problem"
+        device_id = ent_entry.unique_id[len("offline_devices_"):-len("_problem")]
+        dev_entry = dev_reg.async_get(device_id)
+        if dev_entry is None or _should_skip_device(dev_entry):
+            ent_reg.async_remove(ent_entry.entity_id)
 
     async_add_entities(
         sensor
