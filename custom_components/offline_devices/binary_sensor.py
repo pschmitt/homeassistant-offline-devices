@@ -15,16 +15,24 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, SCOPES, STATE_UNAVAILABLE
+from .const import (
+    CONF_MONITOR_SERVICE_DEVICES,
+    DEFAULT_MONITOR_SERVICE_DEVICES,
+    DOMAIN,
+    SCOPES,
+    STATE_UNAVAILABLE,
+)
 from .coordinator import OfflineDevicesCoordinator, _meaningful_entities_by_device
 from .entity import SCOPE_ICONS, SCOPE_LABELS, OfflineDevicesEntity
 
 
-def _should_skip_device(dev_entry: dr.DeviceEntry) -> bool:
+def _should_skip_device(
+    dev_entry: dr.DeviceEntry, *, monitor_service_devices: bool = False
+) -> bool:
     """Return True for devices that should not get a per-device reachable sensor."""
     if dev_entry.disabled_by is not None:
         return True
-    if dev_entry.entry_type is not None:
+    if dev_entry.entry_type is not None and not monitor_service_devices:
         return True
     return False
 
@@ -42,15 +50,18 @@ async def async_setup_entry(
         OfflineDevicesBinarySensor(coordinator, entry, scope) for scope in SCOPES
     )
 
-    # Per-device sensors: one for every physical, non-disabled HA device so
-    # automations can reference them before a device has ever gone offline.
+    # Per-device sensors: one for every eligible HA device so automations can
+    # reference them before a device has ever gone offline.
+    monitor_service = entry.options.get(
+        CONF_MONITOR_SERVICE_DEVICES, DEFAULT_MONITOR_SERVICE_DEVICES
+    )
     dev_reg = dr.async_get(hass)
     ent_reg = er.async_get(hass)
     known_device_ids: set[str] = set()
 
     def _make_sensor(dev_entry: dr.DeviceEntry) -> DeviceOfflineBinarySensor | None:
         """Return a sensor for dev_entry, or None if it should be skipped."""
-        if _should_skip_device(dev_entry):
+        if _should_skip_device(dev_entry, monitor_service_devices=monitor_service):
             return None
         if dev_entry.id in known_device_ids:
             return None
@@ -60,15 +71,17 @@ async def async_setup_entry(
         known_device_ids.add(dev_entry.id)
         return DeviceOfflineBinarySensor(coordinator, dev_entry)
 
-    # Remove stale per-device sensor entries whose device is now a service
-    # device or no longer qualifies (e.g. entry_type was recently set).
+    # Remove stale per-device sensor entries whose device no longer qualifies
+    # (e.g. service devices when the monitor_service_devices option is off).
     for ent_entry in ent_reg.entities.get_entries_for_config_entry_id(entry.entry_id):
         if not ent_entry.unique_id.startswith("offline_devices_") or not ent_entry.unique_id.endswith("_problem"):
             continue
         # Extract device_id from unique_id: "offline_devices_{device_id}_problem"
         device_id = ent_entry.unique_id[len("offline_devices_"):-len("_problem")]
         dev_entry = dev_reg.async_get(device_id)
-        if dev_entry is None or _should_skip_device(dev_entry):
+        if dev_entry is None or _should_skip_device(
+            dev_entry, monitor_service_devices=monitor_service
+        ):
             ent_reg.async_remove(ent_entry.entity_id)
             if dev_entry is not None:
                 dev_reg.async_update_device(
@@ -80,7 +93,7 @@ async def async_setup_entry(
     # entity was already removed in a prior restart but the config-entry
     # association was never cleaned up).
     for dev in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
-        if _should_skip_device(dev):
+        if _should_skip_device(dev, monitor_service_devices=monitor_service):
             dev_reg.async_update_device(dev.id, remove_config_entry_id=entry.entry_id)
 
     async_add_entities(

@@ -56,6 +56,9 @@ DEFAULT_IGNORED_NAMES: list[str] = []
 # "intermittent" label to preserve the previous behavior.
 DEFAULT_IGNORED_LABELS: list[str] = [LABEL_INTERMITTENT]
 
+CONF_MONITOR_SERVICE_DEVICES = "monitor_service_devices"
+DEFAULT_MONITOR_SERVICE_DEVICES = False
+
 # Attributes exposed on the entities.
 ATTR_COUNT = "count"
 ATTR_DEVICES = "devices"

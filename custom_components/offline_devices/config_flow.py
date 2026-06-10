@@ -34,6 +34,7 @@ from .const import (
     CONF_MIN_OFFLINE_AGE_MATTER,
     CONF_MIN_OFFLINE_AGE_ZHA,
     CONF_MIN_OFFLINE_AGE_ZWAVE,
+    CONF_MONITOR_SERVICE_DEVICES,
     CONF_SCAN_INTERVAL,
     DEFAULT_ENABLE_REPAIRS,
     DEFAULT_IGNORED_INTEGRATIONS,
@@ -43,6 +44,7 @@ from .const import (
     DEFAULT_MIN_OFFLINE_AGE_MATTER,
     DEFAULT_MIN_OFFLINE_AGE_ZHA,
     DEFAULT_MIN_OFFLINE_AGE_ZWAVE,
+    DEFAULT_MONITOR_SERVICE_DEVICES,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     MIN_OFFLINE_AGE,
@@ -80,6 +82,7 @@ class OfflineDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
                     CONF_SCAN_INTERVAL: DEFAULT_SCAN_INTERVAL,
                     CONF_MIN_OFFLINE_AGE: DEFAULT_MIN_OFFLINE_AGE,
                     CONF_ENABLE_REPAIRS: DEFAULT_ENABLE_REPAIRS,
+                    CONF_MONITOR_SERVICE_DEVICES: DEFAULT_MONITOR_SERVICE_DEVICES,
                     CONF_IGNORED_INTEGRATIONS: DEFAULT_IGNORED_INTEGRATIONS,
                     CONF_IGNORED_NAMES: DEFAULT_IGNORED_NAMES,
                     CONF_IGNORED_LABELS: DEFAULT_IGNORED_LABELS,
@@ -180,6 +183,13 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                         CONF_ENABLE_REPAIRS,
                         default=options.get(
                             CONF_ENABLE_REPAIRS, DEFAULT_ENABLE_REPAIRS
+                        ),
+                    ): BooleanSelector(),
+                    vol.Required(
+                        CONF_MONITOR_SERVICE_DEVICES,
+                        default=options.get(
+                            CONF_MONITOR_SERVICE_DEVICES,
+                            DEFAULT_MONITOR_SERVICE_DEVICES,
                         ),
                     ): BooleanSelector(),
                     vol.Optional(
