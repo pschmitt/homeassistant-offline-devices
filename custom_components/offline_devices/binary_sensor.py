@@ -75,6 +75,14 @@ async def async_setup_entry(
                     dev_entry.id, remove_config_entry_id=entry.entry_id
                 )
 
+    # Also sweep the device registry for any device that still lists this
+    # config entry but should no longer have a per-device sensor (e.g. the
+    # entity was already removed in a prior restart but the config-entry
+    # association was never cleaned up).
+    for dev in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
+        if _should_skip_device(dev):
+            dev_reg.async_update_device(dev.id, remove_config_entry_id=entry.entry_id)
+
     async_add_entities(
         sensor
         for dev in dev_reg.devices.values()
