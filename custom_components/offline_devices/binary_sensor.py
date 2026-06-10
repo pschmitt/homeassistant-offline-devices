@@ -88,11 +88,14 @@ async def async_setup_entry(
                     dev_entry.id, remove_config_entry_id=entry.entry_id
                 )
 
-    # Also sweep the device registry for any device that still lists this
-    # config entry but should no longer have a per-device sensor (e.g. the
-    # entity was already removed in a prior restart but the config-entry
+    # Also sweep the device registry for any external device that still lists
+    # this config entry but should no longer have a per-device sensor (e.g.
+    # the entity was already removed in a prior restart but the config-entry
     # association was never cleaned up).
+    # Skip the integration's own device (identifiers contain DOMAIN).
     for dev in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
+        if any(ns == DOMAIN for ns, _ in dev.identifiers):
+            continue
         if _should_skip_device(dev, monitor_service_devices=monitor_service):
             dev_reg.async_update_device(dev.id, remove_config_entry_id=entry.entry_id)
 
