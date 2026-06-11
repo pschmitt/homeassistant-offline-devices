@@ -62,6 +62,9 @@ DEFAULT_MONITOR_SERVICE_DEVICES = False
 # Attributes exposed on the entities.
 ATTR_COUNT = "count"
 ATTR_DEVICES = "devices"
+# Devices currently fully unavailable, ignoring the min_offline_age grace
+# period (i.e. the raw set before the duration filter is applied).
+ATTR_OFFLINE_NOW_DEVICES = "offline_now_devices"
 ATTR_DEVICE_IDS = "device_ids"
 ATTR_OFFLINE_SINCE = "offline_since"
 ATTR_MSG = "msg"

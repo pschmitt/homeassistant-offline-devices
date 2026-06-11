@@ -306,22 +306,25 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                 (s.last_changed for s in states if s.last_changed is not None),
                 default=None,
             )
+            offline_device = OfflineDevice(
+                device_id=device.id,
+                name=name,
+                area=area_name,
+                namespaces=namespaces,
+                integration=self._integration_domain(device),
+                offline_since=offline_since,
+            )
+            # Always record the device as currently offline; the grace period
+            # only gates whether it counts as *reported* offline below.
+            report.offline_now.append(offline_device)
             if (
                 effective_min_age > 0
                 and offline_since is not None
                 and now - offline_since < timedelta(seconds=effective_min_age)
             ):
                 continue
-            report.devices.append(
-                OfflineDevice(
-                    device_id=device.id,
-                    name=name,
-                    area=area_name,
-                    namespaces=namespaces,
-                    integration=self._integration_domain(device),
-                    offline_since=offline_since,
-                )
-            )
+            report.devices.append(offline_device)
 
         report.devices.sort(key=lambda device: device.name.casefold())
+        report.offline_now.sort(key=lambda device: device.name.casefold())
         return report

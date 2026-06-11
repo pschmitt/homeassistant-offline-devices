@@ -10,6 +10,7 @@ from .const import (
     ATTR_COUNT,
     ATTR_DEVICE_IDS,
     ATTR_DEVICES,
+    ATTR_OFFLINE_NOW_DEVICES,
     ATTR_OFFLINE_SINCE,
     ATTR_MSG,
     ATTR_PRIMARY_INFO,
@@ -79,6 +80,13 @@ class OfflineDevicesEntity(CoordinatorEntity[OfflineDevicesCoordinator]):
         """Return the number of offline devices for this scope."""
         return len(self._offline_devices)
 
+    @property
+    def _offline_now_devices(self) -> list[OfflineDevice]:
+        """Return devices currently offline for this scope, ignoring duration."""
+        if self.coordinator.data is None:
+            return []
+        return self.coordinator.data.offline_now_for_scope(self._scope)
+
     def _build_attributes(self) -> dict[str, object]:
         """Return shared state attributes describing the offline devices."""
         devices = self._offline_devices
@@ -95,6 +103,9 @@ class OfflineDevicesEntity(CoordinatorEntity[OfflineDevicesCoordinator]):
         return {
             ATTR_COUNT: len(names),
             ATTR_DEVICES: names,
+            ATTR_OFFLINE_NOW_DEVICES: [
+                device.name for device in self._offline_now_devices
+            ],
             ATTR_DEVICE_IDS: [device.device_id for device in devices],
             ATTR_OFFLINE_SINCE: [
                 device.offline_since.isoformat() if device.offline_since else None

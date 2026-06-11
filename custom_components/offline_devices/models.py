@@ -54,15 +54,34 @@ class OfflineReport:
     """The full set of offline devices for one coordinator refresh."""
 
     devices: list[OfflineDevice] = field(default_factory=list)
+    # Devices currently fully unavailable, regardless of min_offline_age. This
+    # is a superset of ``devices``: it includes devices still inside their
+    # grace period that have not yet been reported as offline.
+    offline_now: list[OfflineDevice] = field(default_factory=list)
+
+    @staticmethod
+    def _filter_scope(
+        devices: list[OfflineDevice], scope: str
+    ) -> list[OfflineDevice]:
+        """Return the devices from a list that belong to a given scope."""
+        if scope == SCOPE_ALL:
+            return list(devices)
+        if scope == SCOPE_ZHA:
+            return [device for device in devices if device.is_zha]
+        if scope == SCOPE_MATTER:
+            return [device for device in devices if device.is_matter]
+        if scope == SCOPE_ZWAVE:
+            return [device for device in devices if device.is_zwave]
+        return []
 
     def for_scope(self, scope: str) -> list[OfflineDevice]:
-        """Return the offline devices belonging to a given scope."""
-        if scope == SCOPE_ALL:
-            return list(self.devices)
-        if scope == SCOPE_ZHA:
-            return [device for device in self.devices if device.is_zha]
-        if scope == SCOPE_MATTER:
-            return [device for device in self.devices if device.is_matter]
-        if scope == SCOPE_ZWAVE:
-            return [device for device in self.devices if device.is_zwave]
-        return []
+        """Return the reported offline devices belonging to a given scope."""
+        return self._filter_scope(self.devices, scope)
+
+    def offline_now_for_scope(self, scope: str) -> list[OfflineDevice]:
+        """Return the currently-unavailable devices for a given scope.
+
+        Unlike :meth:`for_scope`, this ignores the min_offline_age grace
+        period.
+        """
+        return self._filter_scope(self.offline_now, scope)

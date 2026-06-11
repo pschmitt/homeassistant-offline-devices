@@ -24,8 +24,9 @@ A single **Offline Devices** service device with these entities:
 | `sensor.offline_devices_z_wave_offline_count` | count | number of offline Z-Wave devices |
 
 Every entity exposes the same attributes: `count`, `devices` (names),
-`device_ids`, `msg`, `primary_info`, `secondary_info` — convenient for
-Lovelace and notifications.
+`offline_now_devices` (names of every device unavailable **right now**,
+ignoring the `min_offline_age` grace period), `device_ids`, `msg`,
+`primary_info`, `secondary_info` — convenient for Lovelace and notifications.
 
 The global scope counts **all** offline devices; `zha`, `matter` and `zwave`
 are breakdowns of that same set.
