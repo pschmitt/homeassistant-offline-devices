@@ -75,8 +75,14 @@ async def async_setup_entry(
         known_device_ids.add(dev_entry.id)
         return DeviceOfflineBinarySensor(coordinator, dev_entry)
 
+    # Compute before the cleanup loops so they can also evict sensors for
+    # devices that lost all their meaningful entities (e.g. their primary
+    # integration was removed, leaving this config entry as the only owner).
+    initial_entities_map = _meaningful_entities_by_device(ent_reg)
+
     # Remove stale per-device sensor entries whose device no longer qualifies
-    # (e.g. service devices when the monitor_service_devices option is off).
+    # (e.g. service devices when the monitor_service_devices option is off, or
+    # orphaned devices whose primary integration has been removed).
     for ent_entry in ent_reg.entities.get_entries_for_config_entry_id(entry.entry_id):
         if not ent_entry.unique_id.startswith("offline_devices_") or not ent_entry.unique_id.endswith("_problem"):
             continue
@@ -85,7 +91,7 @@ async def async_setup_entry(
         dev_entry = dev_reg.async_get(device_id)
         if dev_entry is None or _should_skip_device(
             dev_entry, monitor_service_devices=monitor_service
-        ):
+        ) or not initial_entities_map.get(device_id):
             ent_reg.async_remove(ent_entry.entity_id)
             if dev_entry is not None:
                 dev_reg.async_update_device(
@@ -95,15 +101,17 @@ async def async_setup_entry(
     # Also sweep the device registry for any external device that still lists
     # this config entry but should no longer have a per-device sensor (e.g.
     # the entity was already removed in a prior restart but the config-entry
-    # association was never cleaned up).
+    # association was never cleaned up, or the device lost its primary
+    # integration's entities).
     # Skip the integration's own device (identifiers contain DOMAIN).
     for dev in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
         if any(ns == DOMAIN for ns, _ in dev.identifiers):
             continue
-        if _should_skip_device(dev, monitor_service_devices=monitor_service):
+        if _should_skip_device(
+            dev, monitor_service_devices=monitor_service
+        ) or not initial_entities_map.get(dev.id):
             dev_reg.async_update_device(dev.id, remove_config_entry_id=entry.entry_id)
 
-    initial_entities_map = _meaningful_entities_by_device(ent_reg)
     async_add_entities(
         sensor
         for dev in dev_reg.devices.values()
