@@ -243,15 +243,33 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         """Recompute the offline-device report from the registries and states."""
         return self._compute()
 
+    def is_device_ignored(self, device: dr.DeviceEntry) -> bool:
+        """Return True when the device matches any configured ignore rule.
+
+        Covers all three ignore axes: labels, name substrings, and integration
+        domains.  Used by the coordinator's report computation to exclude devices
+        from the offline report.
+        """
+        ignored_labels = self._ignored_labels
+        if ignored_labels and (device.labels or set()) & ignored_labels:
+            return True
+        name = device.name_by_user or device.name or device.id
+        if _is_ignored(name, self._ignored_names):
+            return True
+        ignored_integrations = self._ignored_integrations
+        if ignored_integrations and any(
+            domain.casefold() in ignored_integrations
+            for domain in self._integration_domains(device)
+        ):
+            return True
+        return False
+
     def _compute(self) -> OfflineReport:
         """Find every device whose meaningful entities are all unavailable."""
         device_registry = dr.async_get(self.hass)
         entity_registry = er.async_get(self.hass)
         area_registry = ar.async_get(self.hass)
         entities_by_device = _meaningful_entities_by_device(entity_registry)
-        ignored_integrations = self._ignored_integrations
-        ignored_names = self._ignored_names
-        ignored_labels = self._ignored_labels
         now = dt_util.utcnow()
 
         report = OfflineReport()
@@ -261,17 +279,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             # Skip helper / service devices; only physical devices can go offline.
             if device.entry_type is not None:
                 continue
-            if ignored_labels and (device.labels or set()) & ignored_labels:
-                continue
-
-            name = device.name_by_user or device.name or device.id
-            if _is_ignored(name, ignored_names):
-                continue
-            integration_domains = self._integration_domains(device)
-            if ignored_integrations and any(
-                domain.casefold() in ignored_integrations
-                for domain in integration_domains
-            ):
+            if self.is_device_ignored(device):
                 continue
 
             entity_ids = entities_by_device.get(device.id)
@@ -293,6 +301,8 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                 area = area_registry.async_get_area(device.area_id)
                 area_name = area.name if area else None
 
+            name = device.name_by_user or device.name or device.id
+            integration_domains = self._integration_domains(device)
             namespaces = tuple(
                 sorted({identifier[0] for identifier in device.identifiers})
             )
