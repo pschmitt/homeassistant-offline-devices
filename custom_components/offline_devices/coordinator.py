@@ -67,6 +67,35 @@ def _is_ignored(name: str, ignored_names: list[str]) -> bool:
     return any(token and token.casefold() in lowered for token in ignored_names)
 
 
+def _has_privacy_mode_on(
+    hass: HomeAssistant,
+    entity_registry: er.EntityRegistry,
+    device_id: str,
+) -> bool:
+    """Return True when a non-disabled 'privacy mode' switch on the device is on.
+
+    Some integrations (e.g. Reolink) put all operational entities unavailable
+    when privacy mode is active while the privacy-mode switch itself stays
+    reachable.  Because that switch carries entity_category=config it is
+    excluded from the meaningful-entity set, which would otherwise cause the
+    device to be falsely reported as offline.
+    """
+    for entry in entity_registry.entities.values():
+        if entry.device_id != device_id:
+            continue
+        if entry.disabled_by is not None:
+            continue
+        if not entry.entity_id.startswith("switch."):
+            continue
+        name = (entry.name or entry.original_name or "").casefold()
+        if "privacy" not in name:
+            continue
+        state = hass.states.get(entry.entity_id)
+        if state is not None and state.state == "on":
+            return True
+    return False
+
+
 def _meaningful_entities_by_device(
     entity_registry: er.EntityRegistry,
 ) -> dict[str, list[str]]:
@@ -132,14 +161,23 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
 
         @callback
         def _on_state_change(event: Event) -> None:
-            # Only an entity toggling in/out of "unavailable" can change which
-            # devices are fully offline; ignore every other state change.
+            # Trigger when an entity toggles in/out of "unavailable" — the
+            # primary signal that a device's reachability changed.
             old = event.data.get("old_state")
             new = event.data.get("new_state")
             old_unavailable = old is not None and old.state == STATE_UNAVAILABLE
             new_unavailable = new is not None and new.state == STATE_UNAVAILABLE
             if old_unavailable != new_unavailable:
                 _schedule_refresh()
+                return
+            # Also trigger when a switch flips on/off: privacy-mode switches
+            # affect offline detection without ever going through "unavailable".
+            entity_id = event.data.get("entity_id", "")
+            if entity_id.startswith("switch."):
+                old_state = old.state if old is not None else None
+                new_state = new.state if new is not None else None
+                if old_state != new_state and {old_state, new_state} <= {"on", "off"}:
+                    _schedule_refresh()
 
         @callback
         def _on_registry_change(_event: Event) -> None:
@@ -294,6 +332,9 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             if not states:
                 continue
             if not all(state.state == STATE_UNAVAILABLE for state in states):
+                continue
+
+            if _has_privacy_mode_on(self.hass, entity_registry, device.id):
                 continue
 
             area_name: str | None = None
