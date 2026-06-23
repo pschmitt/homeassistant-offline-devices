@@ -316,6 +316,17 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             # Skip helper / service devices; only physical devices can go offline.
             if device.entry_type is not None:
                 continue
+            # Skip devices whose primary integration was disabled by the user.
+            # Secondary integrations (openwrt_ubus, netbox_asset_tag, …) may
+            # still attach entities to the device and would otherwise produce
+            # false positives.
+            primary_entry_id = device.primary_config_entry
+            if primary_entry_id:
+                primary_entry = self.hass.config_entries.async_get_entry(
+                    primary_entry_id
+                )
+                if primary_entry is not None and primary_entry.disabled_by is not None:
+                    continue
             if self.is_device_ignored(device):
                 continue
 
