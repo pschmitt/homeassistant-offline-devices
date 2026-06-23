@@ -301,6 +301,19 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                 return True
         return False
 
+    def _is_entity_integration_ignored(
+        self,
+        entity_registry: er.EntityRegistry,
+        entity_id: str,
+        ignored_integrations: set[str],
+    ) -> bool:
+        """Return True when the entity's config entry domain is ignored."""
+        entry = entity_registry.entities.get(entity_id)
+        if entry is None or entry.config_entry_id is None:
+            return False
+        ce = self.hass.config_entries.async_get_entry(entry.config_entry_id)
+        return ce is not None and ce.domain.casefold() in ignored_integrations
+
     def _compute(self) -> OfflineReport:
         """Find every device whose meaningful entities are all unavailable."""
         device_registry = dr.async_get(self.hass)
@@ -333,6 +346,23 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             entity_ids = entities_by_device.get(device.id)
             if not entity_ids:
                 continue
+
+            # Strip entities whose config entry belongs to an ignored
+            # integration.  This prevents secondary integrations
+            # (e.g. openwrt_ubus) from being the sole driver of an offline
+            # report when the device's primary integration is disabled or
+            # otherwise excluded.
+            ignored_integrations = self._ignored_integrations
+            if ignored_integrations:
+                entity_ids = [
+                    eid
+                    for eid in entity_ids
+                    if not self._is_entity_integration_ignored(
+                        entity_registry, eid, ignored_integrations
+                    )
+                ]
+                if not entity_ids:
+                    continue
 
             states = [
                 state
