@@ -295,11 +295,10 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         if _is_ignored(name, self._ignored_names):
             return True
         ignored_integrations = self._ignored_integrations
-        if ignored_integrations and any(
-            domain.casefold() in ignored_integrations
-            for domain in self._integration_domains(device)
-        ):
-            return True
+        if ignored_integrations:
+            primary = self._integration_domain(device)
+            if primary and primary.casefold() in ignored_integrations:
+                return True
         return False
 
     def _compute(self) -> OfflineReport:
