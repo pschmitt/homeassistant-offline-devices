@@ -8,7 +8,7 @@ from homeassistant.components.binary_sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
-from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.core import CoreState, Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -162,6 +162,11 @@ async def async_setup_entry(
     # complete when _meaningful_entities_by_device is evaluated.
     @callback
     def _on_entity_registry_updated(event: Event) -> None:
+        # During startup, config entries enable their entities en-masse; the
+        # initial setup loop already covers all devices present at that point.
+        # Only act once HA is fully running (manual re-enable via UI).
+        if hass.state is not CoreState.running:
+            return
         if event.data.get("action") != "update":
             return
         if "disabled_by" not in event.data.get("changes", {}):
@@ -249,11 +254,10 @@ class DeviceOfflineBinarySensor(
 
         Checks raw entity states directly so that ignored devices (e.g. those
         labelled 'intermittent') still reflect their actual connectivity.
+        Uses the coordinator's cached entities_by_device map to avoid re-walking
+        the full entity registry once per sensor per coordinator refresh.
         """
-        entity_registry = er.async_get(self.hass)
-        entity_ids = _meaningful_entities_by_device(entity_registry).get(
-            self._device_id, []
-        )
+        entity_ids = self.coordinator.entities_by_device.get(self._device_id, [])
         if not entity_ids:
             return True
         states = [

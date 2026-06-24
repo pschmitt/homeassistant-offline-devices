@@ -136,6 +136,9 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
                 )
             ),
         )
+        # Cached by _compute(); read by DeviceOfflineBinarySensor.is_on so that
+        # each per-device sensor does not re-walk the full entity registry.
+        self.entities_by_device: dict[str, list[str]] = {}
 
     @callback
     def async_setup_event_listeners(self) -> None:
@@ -173,6 +176,11 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
 
         @callback
         def _on_state_change(event: Event) -> None:
+            # Ignore state changes during startup: event listeners fire before all
+            # integrations have loaded, so many entities are transiently unavailable.
+            # The EVENT_HOMEASSISTANT_STARTED refresh in __init__.py covers that gap.
+            if self.hass.state is not CoreState.running:
+                return
             # Trigger when an entity toggles in/out of "unavailable" — the
             # primary signal that a device's reachability changed.
             old = event.data.get("old_state")
@@ -205,6 +213,9 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         @callback
         def _on_registry_change(_event: Event) -> None:
             # Devices/entities added, removed, enabled, relabelled, etc.
+            # Skip during startup — the post-start refresh handles the final state.
+            if self.hass.state is not CoreState.running:
+                return
             _schedule_refresh()
 
         entry = self.config_entry
@@ -343,6 +354,9 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         entity_registry = er.async_get(self.hass)
         area_registry = ar.async_get(self.hass)
         entities_by_device = _meaningful_entities_by_device(entity_registry)
+        # Cache for DeviceOfflineBinarySensor.is_on — avoids re-walking the
+        # full entity registry once per per-device sensor per coordinator refresh.
+        self.entities_by_device = entities_by_device
         now = dt_util.utcnow()
 
         report = OfflineReport()

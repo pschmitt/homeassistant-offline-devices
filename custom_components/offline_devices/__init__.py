@@ -68,20 +68,25 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # transiently unavailable, so the first post-start refresh is the first
     # trustworthy one.
     if hass.state is not CoreState.running:
+        _started = False
 
         @callback
         def _refresh_on_started(_event: Event) -> None:
+            nonlocal _started
+            _started = True
             entry.async_create_task(
                 hass,
                 coordinator.async_request_refresh(),
                 "offline_devices_started_refresh",
             )
 
-        entry.async_on_unload(
-            hass.bus.async_listen_once(
-                EVENT_HOMEASSISTANT_STARTED, _refresh_on_started
-            )
+        _cancel_started = hass.bus.async_listen_once(
+            EVENT_HOMEASSISTANT_STARTED, _refresh_on_started
         )
+
+        # Only cancel if the event has not yet fired. Calling the cancel after
+        # homeassistant_started fires logs "Unable to remove unknown job listener".
+        entry.async_on_unload(lambda: None if _started else _cancel_started())
 
     return True
 
