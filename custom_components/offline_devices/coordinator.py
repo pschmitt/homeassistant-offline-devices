@@ -160,6 +160,18 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             )
 
         @callback
+        def _force_refresh() -> None:
+            # async_refresh() bypasses the debouncer cooldown entirely.  Use
+            # this when we know the preceding debounced refresh ran too early
+            # (before entity states existed) and the normal cooldown window
+            # (REQUEST_REFRESH_DEFAULT_COOLDOWN = 10 s) would delay detection.
+            self.config_entry.async_create_task(
+                self.hass,
+                self.async_refresh(),
+                "offline_devices_force_refresh",
+            )
+
+        @callback
         def _on_state_change(event: Event) -> None:
             # Trigger when an entity toggles in/out of "unavailable" — the
             # primary signal that a device's reachability changed.
@@ -168,7 +180,18 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             old_unavailable = old is not None and old.state == STATE_UNAVAILABLE
             new_unavailable = new is not None and new.state == STATE_UNAVAILABLE
             if old_unavailable != new_unavailable:
-                _schedule_refresh()
+                if old is None and new_unavailable:
+                    # A brand-new entity appeared straight into "unavailable".
+                    # This is the normal path when a config entry is re-enabled
+                    # while its device is offline: the registry-change event
+                    # already fired an immediate debounced refresh, but that
+                    # refresh ran before the reload finished so no entity states
+                    # existed yet.  The debounce cooldown (10 s) would swallow
+                    # the normal async_request_refresh(); bypass it so the
+                    # device is reported without delay.
+                    _force_refresh()
+                else:
+                    _schedule_refresh()
                 return
             # Also trigger when a switch flips on/off: privacy-mode switches
             # affect offline detection without ever going through "unavailable".

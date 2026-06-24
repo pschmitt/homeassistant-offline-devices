@@ -115,7 +115,7 @@ async def async_setup_entry(
     # primary integration was removed).
     # Skip the integration's own device (identifiers contain DOMAIN).
     for dev in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
-        if any(ns == DOMAIN for ns, _ in dev.identifiers):
+        if any(identifier[0] == DOMAIN for identifier in dev.identifiers):
             continue
         if _should_skip_device(
             dev, monitor_service_devices=monitor_service
@@ -147,6 +147,47 @@ async def async_setup_entry(
     entry.async_on_unload(
         hass.bus.async_listen(
             dr.EVENT_DEVICE_REGISTRY_UPDATED, _on_device_registry_updated
+        )
+    )
+
+    # When a config entry is re-enabled, HA fires dr.async_config_entry_disabled_by_changed
+    # before er.async_config_entry_disabled_by_changed.  Because async_fire_internal runs
+    # @callback listeners synchronously inline, _on_device_registry_updated fires while
+    # entity registry entries still carry disabled_by=CONFIG_ENTRY — so
+    # _meaningful_entities_by_device returns empty and _make_sensor bails out.
+    #
+    # Fix: also listen to entity registry updates.  When an entity's disabled_by is
+    # cleared we schedule a deferred coroutine task so it runs after the current
+    # synchronous batch (all sibling entities re-enabled) and the entity registry is
+    # complete when _meaningful_entities_by_device is evaluated.
+    @callback
+    def _on_entity_registry_updated(event: Event) -> None:
+        if event.data.get("action") != "update":
+            return
+        if "disabled_by" not in event.data.get("changes", {}):
+            return
+        entity_entry = ent_reg.async_get(event.data["entity_id"])
+        if entity_entry is None or entity_entry.disabled_by is not None:
+            return
+        device_id = entity_entry.device_id
+        if not device_id or device_id in known_device_ids:
+            return
+        dev_entry = dev_reg.async_get(device_id)
+        if dev_entry is None:
+            return
+
+        async def _deferred_add() -> None:
+            sensor = _make_sensor(dev_entry)
+            if sensor is not None:
+                async_add_entities([sensor])
+
+        entry.async_create_task(
+            hass, _deferred_add(), "offline_devices_deferred_per_device_sensor"
+        )
+
+    entry.async_on_unload(
+        hass.bus.async_listen(
+            er.EVENT_ENTITY_REGISTRY_UPDATED, _on_entity_registry_updated
         )
     )
 
