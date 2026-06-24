@@ -8,7 +8,7 @@ from datetime import timedelta
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_STATE_CHANGED
-from homeassistant.core import Event, HomeAssistant, callback
+from homeassistant.core import CoreState, Event, HomeAssistant, callback
 from homeassistant.helpers import area_registry as ar
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
@@ -180,15 +180,15 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             old_unavailable = old is not None and old.state == STATE_UNAVAILABLE
             new_unavailable = new is not None and new.state == STATE_UNAVAILABLE
             if old_unavailable != new_unavailable:
-                if old is None and new_unavailable:
-                    # A brand-new entity appeared straight into "unavailable".
-                    # This is the normal path when a config entry is re-enabled
-                    # while its device is offline: the registry-change event
-                    # already fired an immediate debounced refresh, but that
-                    # refresh ran before the reload finished so no entity states
-                    # existed yet.  The debounce cooldown (10 s) would swallow
-                    # the normal async_request_refresh(); bypass it so the
-                    # device is reported without delay.
+                if old is None and new_unavailable and self.hass.state is CoreState.running:
+                    # A brand-new entity appeared straight into "unavailable"
+                    # while HA is fully running — the normal path when a config
+                    # entry is re-enabled while its device is offline.  Bypass
+                    # the debouncer so the device is reported without delay.
+                    # Guard: during startup every entity initialises with
+                    # old=None, so _force_refresh() would fire for hundreds of
+                    # entities and flood the coordinator with compute scans.
+                    # The post-start refresh in __init__.py covers that case.
                     _force_refresh()
                 else:
                     _schedule_refresh()
