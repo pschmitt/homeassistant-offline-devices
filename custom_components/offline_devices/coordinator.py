@@ -318,9 +318,15 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
     def is_device_ignored(self, device: dr.DeviceEntry) -> bool:
         """Return True when the device matches any configured ignore rule.
 
-        Covers all three ignore axes: labels, name substrings, and integration
-        domains.  Used by the coordinator's report computation to exclude devices
-        from the offline report.
+        Covers labels and name substrings.  Integration-domain filtering is
+        intentionally NOT done here: a device whose primary integration is
+        ignored may still have entities from other integrations (e.g. an ESPHome
+        device that is also tracked by openwrt_ubus).  Those secondary entities
+        must still be able to report the device as offline.  The entity-level
+        strip in _compute() already removes ignored-integration entities, and the
+        ``if not entity_ids: continue`` guard skips devices that have no
+        remaining entities — so pure-ignored-integration devices are handled
+        without needing a device-level domain check here.
         """
         ignored_labels = self._ignored_labels
         if ignored_labels and (device.labels or set()) & ignored_labels:
@@ -328,11 +334,6 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         name = device.name_by_user or device.name or device.id
         if _is_ignored(name, self._ignored_names):
             return True
-        ignored_integrations = self._ignored_integrations
-        if ignored_integrations:
-            primary = self._integration_domain(device)
-            if primary and primary.casefold() in ignored_integrations:
-                return True
         return False
 
     def _is_entity_integration_ignored(
