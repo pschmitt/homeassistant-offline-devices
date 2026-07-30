@@ -95,8 +95,9 @@ class OfflineDevicesEntity(CoordinatorEntity[OfflineDevicesCoordinator]):
         noun = SCOPE_NOUNS.get(self._scope, "devices")
         if names:
             joined = ", ".join(names)
-            msg = f"{len(names)} {noun} offline: {joined}"
-            primary = f"{len(names)} {noun} offline"
+            singular_noun = noun[:-1] if len(names) == 1 else noun
+            msg = f"{len(names)} {singular_noun} offline: {joined}"
+            primary = f"{len(names)} {singular_noun} offline"
         else:
             joined = ""
             msg = f"All {noun} online"
