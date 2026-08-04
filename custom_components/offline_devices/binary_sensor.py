@@ -11,7 +11,6 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import CoreState, Event, HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers import entity_registry as er
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -243,10 +242,12 @@ class DeviceOfflineBinarySensor(
         super().__init__(coordinator)
         self._device_id = dev_entry.id
         self._attr_unique_id = f"offline_devices_{dev_entry.id}_problem"
-        self._attr_device_info = DeviceInfo(
-            identifiers=dev_entry.identifiers,
-            connections=dev_entry.connections,
-        )
+        # Link directly to the tracked device instead of copying its
+        # identifiers/connections into DeviceInfo: a device now belongs to a
+        # single config entry and no longer merges across integrations that
+        # share identifiers (HA Core 2026.8, "single config entry per
+        # device").
+        self.device_entry = dev_entry
 
     @property
     def is_on(self) -> bool:
