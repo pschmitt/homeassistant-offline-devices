@@ -294,21 +294,12 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
 
     def _integration_domains(self, device: dr.DeviceEntry) -> tuple[str, ...]:
         """Return all owning integration domains from the device's config entries."""
-        domains = {
-            entry.domain
-            for entry_id in device.config_entries
-            if (entry := self.hass.config_entries.async_get_entry(entry_id)) is not None
-        }
-        return tuple(sorted(domains))
+        entry = self.hass.config_entries.async_get_entry(device.config_entry_id)
+        return (entry.domain,) if entry is not None else ()
 
     def _integration_domain(self, device: dr.DeviceEntry) -> str | None:
         """Return the preferred integration domain for links and reporting."""
-        entry_id = device.primary_config_entry or next(
-            iter(device.config_entries), None
-        )
-        if entry_id is None:
-            return None
-        entry = self.hass.config_entries.async_get_entry(entry_id)
+        entry = self.hass.config_entries.async_get_entry(device.config_entry_id)
         return entry.domain if entry else None
 
     async def _async_update_data(self) -> OfflineReport:
@@ -361,7 +352,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
         now = dt_util.utcnow()
 
         report = OfflineReport()
-        for device in device_registry.devices.values():
+        for device in device_registry.devices:
             if device.disabled_by is not None:
                 continue
             # Skip helper / service devices; only physical devices can go offline.
@@ -371,7 +362,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             # Secondary integrations (openwrt_ubus, netbox_asset_tag, …) may
             # still attach entities to the device and would otherwise produce
             # false positives.
-            primary_entry_id = device.primary_config_entry
+            primary_entry_id = device.config_entry_id
             if primary_entry_id:
                 primary_entry = self.hass.config_entries.async_get_entry(
                     primary_entry_id

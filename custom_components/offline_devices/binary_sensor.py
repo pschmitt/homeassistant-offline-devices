@@ -39,14 +39,14 @@ def _should_skip_device(
 def _is_orphaned_device(dev_entry: dr.DeviceEntry, entry_id: str) -> bool:
     """Return True when this config entry is the device's only remaining owner.
 
-    Such a device's primary integration has been *removed*: offline-devices is
-    the sole config entry keeping it alive in the registry, so its per-device
-    sensor should be evicted.  A merely *disabled* integration still appears in
-    ``config_entries`` (its entities are disabled, not removed), so disabling an
+    Such a device's original integration has been *removed*: offline-devices
+    is the config entry left owning it in the registry, so its per-device
+    sensor should be evicted.  A merely *disabled* integration still owns the
+    device (its entities are disabled, not removed), so disabling an
     integration does not make its devices look orphaned — their reachable
     sensors are preserved and simply read unavailable until it is re-enabled.
     """
-    return dev_entry.config_entries <= {entry_id}
+    return dev_entry.config_entry_id == entry_id
 
 
 async def async_setup_entry(
@@ -113,7 +113,7 @@ async def async_setup_entry(
     # association was never cleaned up, or the device was orphaned when its
     # primary integration was removed).
     # Skip the integration's own device (identifiers contain DOMAIN).
-    for dev in dev_reg.devices.get_devices_for_config_entry_id(entry.entry_id):
+    for dev in dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
         if any(identifier[0] == DOMAIN for identifier in dev.identifiers):
             continue
         if _should_skip_device(
@@ -124,7 +124,7 @@ async def async_setup_entry(
     initial_entities_map = _meaningful_entities_by_device(ent_reg)
     async_add_entities(
         sensor
-        for dev in dev_reg.devices.values()
+        for dev in dev_reg.devices
         if (sensor := _make_sensor(dev, initial_entities_map)) is not None
     )
 
