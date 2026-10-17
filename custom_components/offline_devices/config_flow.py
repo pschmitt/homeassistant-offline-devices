@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import Any
 
 import voluptuous as vol
-
 from homeassistant.config_entries import (
     ConfigEntry,
     ConfigFlow,
@@ -66,9 +65,7 @@ class OfflineDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
         """Return the options flow."""
         return OfflineDevicesOptionsFlow()
 
-    async def async_step_user(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_user(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Handle the single-instance setup step."""
         # Only one instance makes sense: it already inspects every device.
         await self.async_set_unique_id(DOMAIN)
@@ -95,9 +92,7 @@ class OfflineDevicesConfigFlow(ConfigFlow, domain=DOMAIN):
 class OfflineDevicesOptionsFlow(OptionsFlow):
     """Handle options for Offline Devices."""
 
-    async def async_step_init(
-        self, user_input: dict[str, Any] | None = None
-    ) -> ConfigFlowResult:
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         """Manage the integration options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
@@ -116,9 +111,7 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                 {
                     vol.Required(
                         CONF_SCAN_INTERVAL,
-                        default=options.get(
-                            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-                        ),
+                        default=options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL),
                     ): NumberSelector(
                         NumberSelectorConfig(
                             min=MIN_SCAN_INTERVAL,
@@ -129,9 +122,7 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                     ),
                     vol.Required(
                         CONF_MIN_OFFLINE_AGE,
-                        default=options.get(
-                            CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE
-                        ),
+                        default=options.get(CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE),
                     ): NumberSelector(
                         NumberSelectorConfig(
                             min=MIN_OFFLINE_AGE,
@@ -142,9 +133,7 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                     ),
                     vol.Required(
                         CONF_MIN_OFFLINE_AGE_ZHA,
-                        default=options.get(
-                            CONF_MIN_OFFLINE_AGE_ZHA, DEFAULT_MIN_OFFLINE_AGE_ZHA
-                        ),
+                        default=options.get(CONF_MIN_OFFLINE_AGE_ZHA, DEFAULT_MIN_OFFLINE_AGE_ZHA),
                     ): NumberSelector(
                         NumberSelectorConfig(
                             min=MIN_OFFLINE_AGE_OVERRIDE,
@@ -181,9 +170,7 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                     ),
                     vol.Required(
                         CONF_ENABLE_REPAIRS,
-                        default=options.get(
-                            CONF_ENABLE_REPAIRS, DEFAULT_ENABLE_REPAIRS
-                        ),
+                        default=options.get(CONF_ENABLE_REPAIRS, DEFAULT_ENABLE_REPAIRS),
                     ): BooleanSelector(),
                     vol.Required(
                         CONF_MONITOR_SERVICE_DEVICES,
@@ -208,9 +195,7 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                     ),
                     vol.Optional(
                         CONF_IGNORED_NAMES,
-                        default=options.get(
-                            CONF_IGNORED_NAMES, DEFAULT_IGNORED_NAMES
-                        ),
+                        default=options.get(CONF_IGNORED_NAMES, DEFAULT_IGNORED_NAMES),
                     ): SelectSelector(
                         SelectSelectorConfig(
                             options=[],
@@ -221,9 +206,7 @@ class OfflineDevicesOptionsFlow(OptionsFlow):
                     ),
                     vol.Optional(
                         CONF_IGNORED_LABELS,
-                        default=options.get(
-                            CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS
-                        ),
+                        default=options.get(CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS),
                     ): LabelSelector(LabelSelectorConfig(multiple=True)),
                 }
             ),

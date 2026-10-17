@@ -131,9 +131,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             name=DOMAIN,
             config_entry=config_entry,
             update_interval=timedelta(
-                seconds=config_entry.options.get(
-                    CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-                )
+                seconds=config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
             ),
         )
         # Cached by _compute(); read by DeviceOfflineBinarySensor.is_on so that
@@ -219,35 +217,23 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             _schedule_refresh()
 
         entry = self.config_entry
+        entry.async_on_unload(self.hass.bus.async_listen(EVENT_STATE_CHANGED, _on_state_change))
         entry.async_on_unload(
-            self.hass.bus.async_listen(EVENT_STATE_CHANGED, _on_state_change)
+            self.hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, _on_registry_change)
         )
         entry.async_on_unload(
-            self.hass.bus.async_listen(
-                dr.EVENT_DEVICE_REGISTRY_UPDATED, _on_registry_change
-            )
-        )
-        entry.async_on_unload(
-            self.hass.bus.async_listen(
-                er.EVENT_ENTITY_REGISTRY_UPDATED, _on_registry_change
-            )
+            self.hass.bus.async_listen(er.EVENT_ENTITY_REGISTRY_UPDATED, _on_registry_change)
         )
 
     @property
     def _ignored_names(self) -> list[str]:
         """Return the configured list of ignored device-name substrings."""
-        return self.config_entry.options.get(
-            CONF_IGNORED_NAMES, DEFAULT_IGNORED_NAMES
-        )
+        return self.config_entry.options.get(CONF_IGNORED_NAMES, DEFAULT_IGNORED_NAMES)
 
     @property
     def _ignored_labels(self) -> set[str]:
         """Return the configured set of device label ids to ignore."""
-        return set(
-            self.config_entry.options.get(
-                CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS
-            )
-        )
+        return set(self.config_entry.options.get(CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS))
 
     @property
     def _ignored_integrations(self) -> set[str]:
@@ -263,9 +249,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
     @property
     def _min_offline_age(self) -> int:
         """Return the global minimum unavailable age before a device is reported."""
-        return self.config_entry.options.get(
-            CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE
-        )
+        return self.config_entry.options.get(CONF_MIN_OFFLINE_AGE, DEFAULT_MIN_OFFLINE_AGE)
 
     def _effective_min_offline_age(
         self, integration_domains: tuple[str, ...], namespaces: tuple[str, ...]
@@ -364,9 +348,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
             # false positives.
             primary_entry_id = device.config_entry_id
             if primary_entry_id:
-                primary_entry = self.hass.config_entries.async_get_entry(
-                    primary_entry_id
-                )
+                primary_entry = self.hass.config_entries.async_get_entry(primary_entry_id)
                 if primary_entry is not None and primary_entry.disabled_by is not None:
                     continue
             if self.is_device_ignored(device):
@@ -413,9 +395,7 @@ class OfflineDevicesCoordinator(DataUpdateCoordinator[OfflineReport]):
 
             name = device.name_by_user or device.name or device.id
             integration_domains = self._integration_domains(device)
-            namespaces = tuple(
-                sorted({identifier[0] for identifier in device.identifiers})
-            )
+            namespaces = tuple(sorted({identifier[0] for identifier in device.identifiers}))
             label_age = _label_min_offline_age(device.labels or set())
             effective_min_age = (
                 label_age

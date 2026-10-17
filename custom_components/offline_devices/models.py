@@ -60,9 +60,7 @@ class OfflineReport:
     offline_now: list[OfflineDevice] = field(default_factory=list)
 
     @staticmethod
-    def _filter_scope(
-        devices: list[OfflineDevice], scope: str
-    ) -> list[OfflineDevice]:
+    def _filter_scope(devices: list[OfflineDevice], scope: str) -> list[OfflineDevice]:
         """Return the devices from a list that belong to a given scope."""
         if scope == SCOPE_ALL:
             return list(devices)

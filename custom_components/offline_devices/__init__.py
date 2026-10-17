@@ -43,9 +43,7 @@ def _ensure_labels_exist(hass: HomeAssistant, label_ids: list[str]) -> None:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Offline Devices from a config entry."""
-    _ensure_labels_exist(
-        hass, entry.options.get(CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS)
-    )
+    _ensure_labels_exist(hass, entry.options.get(CONF_IGNORED_LABELS, DEFAULT_IGNORED_LABELS))
 
     coordinator = OfflineDevicesCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()

@@ -26,9 +26,7 @@ async def async_setup_entry(
 ) -> None:
     """Set up the offline-device count sensors."""
     coordinator: OfflineDevicesCoordinator = hass.data[DOMAIN][entry.entry_id]
-    async_add_entities(
-        OfflineDevicesCountSensor(coordinator, entry, scope) for scope in SCOPES
-    )
+    async_add_entities(OfflineDevicesCountSensor(coordinator, entry, scope) for scope in SCOPES)
 
 
 class OfflineDevicesCountSensor(OfflineDevicesEntity, SensorEntity):

@@ -9,7 +9,6 @@ can be re-paired in one click.
 from __future__ import annotations
 
 import voluptuous as vol
-
 from homeassistant.components.repairs import RepairsFlow
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -52,13 +51,9 @@ def _placeholders(device: OfflineDevice) -> dict[str, str]:
         "device_link": URL_DEVICE_PAGE.format(device_id=device.device_id),
     }
     if device.integration:
-        placeholders["integration_link"] = URL_INTEGRATION_PAGE.format(
-            domain=device.integration
-        )
+        placeholders["integration_link"] = URL_INTEGRATION_PAGE.format(domain=device.integration)
     else:
-        placeholders["integration_link"] = URL_DEVICE_PAGE.format(
-            device_id=device.device_id
-        )
+        placeholders["integration_link"] = URL_DEVICE_PAGE.format(device_id=device.device_id)
     if device.is_zha:
         placeholders["zha_add_link"] = URL_ZHA_ADD
     return placeholders
@@ -93,9 +88,7 @@ def async_sync_issues(
     # Create/refresh issues for currently-offline devices.
     for issue_id, device in wanted.items():
         learn_more_url = (
-            URL_ZHA_ADD
-            if device.is_zha
-            else URL_DEVICE_PAGE.format(device_id=device.device_id)
+            URL_ZHA_ADD if device.is_zha else URL_DEVICE_PAGE.format(device_id=device.device_id)
         )
         ir.async_create_issue(
             hass,

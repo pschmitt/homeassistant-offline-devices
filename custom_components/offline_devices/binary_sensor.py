@@ -58,9 +58,7 @@ async def async_setup_entry(
     coordinator: OfflineDevicesCoordinator = hass.data[DOMAIN][entry.entry_id]
 
     # Scope-level aggregate sensors (all / zha / matter / zwave).
-    async_add_entities(
-        OfflineDevicesBinarySensor(coordinator, entry, scope) for scope in SCOPES
-    )
+    async_add_entities(OfflineDevicesBinarySensor(coordinator, entry, scope) for scope in SCOPES)
 
     # Per-device sensors: one for every eligible HA device so automations can
     # reference them before a device has ever gone offline.
@@ -93,19 +91,21 @@ async def async_setup_entry(
     # A device whose integration is only *disabled* is intentionally kept: its
     # config entry still owns the device, so it is not orphaned.
     for ent_entry in ent_reg.entities.get_entries_for_config_entry_id(entry.entry_id):
-        if not ent_entry.unique_id.startswith("offline_devices_") or not ent_entry.unique_id.endswith("_problem"):
+        if not ent_entry.unique_id.startswith(
+            "offline_devices_"
+        ) or not ent_entry.unique_id.endswith("_problem"):
             continue
         # Extract device_id from unique_id: "offline_devices_{device_id}_problem"
-        device_id = ent_entry.unique_id[len("offline_devices_"):-len("_problem")]
+        device_id = ent_entry.unique_id[len("offline_devices_") : -len("_problem")]
         dev_entry = dev_reg.async_get(device_id)
-        if dev_entry is None or _should_skip_device(
-            dev_entry, monitor_service_devices=monitor_service
-        ) or _is_orphaned_device(dev_entry, entry.entry_id):
+        if (
+            dev_entry is None
+            or _should_skip_device(dev_entry, monitor_service_devices=monitor_service)
+            or _is_orphaned_device(dev_entry, entry.entry_id)
+        ):
             ent_reg.async_remove(ent_entry.entity_id)
             if dev_entry is not None:
-                dev_reg.async_update_device(
-                    dev_entry.id, remove_config_entry_id=entry.entry_id
-                )
+                dev_reg.async_update_device(dev_entry.id, remove_config_entry_id=entry.entry_id)
 
     # Also sweep the device registry for any external device that still lists
     # this config entry but should no longer have a per-device sensor (e.g.
@@ -116,9 +116,9 @@ async def async_setup_entry(
     for dev in dr.async_entries_for_config_entry(dev_reg, entry.entry_id):
         if any(identifier[0] == DOMAIN for identifier in dev.identifiers):
             continue
-        if _should_skip_device(
-            dev, monitor_service_devices=monitor_service
-        ) or _is_orphaned_device(dev, entry.entry_id):
+        if _should_skip_device(dev, monitor_service_devices=monitor_service) or _is_orphaned_device(
+            dev, entry.entry_id
+        ):
             dev_reg.async_update_device(dev.id, remove_config_entry_id=entry.entry_id)
 
     initial_entities_map = _meaningful_entities_by_device(ent_reg)
@@ -144,9 +144,7 @@ async def async_setup_entry(
             async_add_entities([sensor])
 
     entry.async_on_unload(
-        hass.bus.async_listen(
-            dr.EVENT_DEVICE_REGISTRY_UPDATED, _on_device_registry_updated
-        )
+        hass.bus.async_listen(dr.EVENT_DEVICE_REGISTRY_UPDATED, _on_device_registry_updated)
     )
 
     # When a config entry is re-enabled, HA fires dr.async_config_entry_disabled_by_changed
@@ -185,14 +183,10 @@ async def async_setup_entry(
             if sensor is not None:
                 async_add_entities([sensor])
 
-        entry.async_create_task(
-            hass, _deferred_add(), "offline_devices_deferred_per_device_sensor"
-        )
+        entry.async_create_task(hass, _deferred_add(), "offline_devices_deferred_per_device_sensor")
 
     entry.async_on_unload(
-        hass.bus.async_listen(
-            er.EVENT_ENTITY_REGISTRY_UPDATED, _on_entity_registry_updated
-        )
+        hass.bus.async_listen(er.EVENT_ENTITY_REGISTRY_UPDATED, _on_entity_registry_updated)
     )
 
 
@@ -219,9 +213,7 @@ class OfflineDevicesBinarySensor(OfflineDevicesEntity, BinarySensorEntity):
         return self._build_attributes()
 
 
-class DeviceOfflineBinarySensor(
-    CoordinatorEntity[OfflineDevicesCoordinator], BinarySensorEntity
-):
+class DeviceOfflineBinarySensor(CoordinatorEntity[OfflineDevicesCoordinator], BinarySensorEntity):
     """Problem binary sensor linked to a physical HA device.
 
     Always present (off = healthy, on = offline) so automations can reference
@@ -261,9 +253,7 @@ class DeviceOfflineBinarySensor(
         entity_ids = self.coordinator.entities_by_device.get(self._device_id, [])
         if not entity_ids:
             return True
-        states = [
-            s for eid in entity_ids if (s := self.hass.states.get(eid)) is not None
-        ]
+        states = [s for eid in entity_ids if (s := self.hass.states.get(eid)) is not None]
         if not states:
             return True
         return not all(s.state == STATE_UNAVAILABLE for s in states)
